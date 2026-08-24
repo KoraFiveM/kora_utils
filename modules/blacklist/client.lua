@@ -19,7 +19,7 @@ local blacklistedWeapons = Small.hashSet(Config.blacklist.weapons)
 if not next(blacklistedWeapons) then return end
 
 Small.onInterval(Config.blacklist.weaponSweepInterval, function()
-    local ped = PlayerPedId()
+    local ped = QB.cache.ped()
     local weapon = GetSelectedPedWeapon(ped)
 
     if blacklistedWeapons[weapon] then
