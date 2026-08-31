@@ -20,7 +20,7 @@ if not next(blacklistedWeapons) then return end
 
 Small.onInterval(Config.blacklist.weaponSweepInterval, function()
     local ped = QB.cache.ped()
-    local weapon = GetSelectedPedWeapon(ped)
+    local weapon = QB.cache.weapon()
 
     if blacklistedWeapons[weapon] then
         RemoveWeaponFromPed(ped, weapon)

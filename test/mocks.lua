@@ -96,6 +96,8 @@ function M.install()
     _G.QB = _G.QB or {}
     _G.QB.cache = _G.QB.cache or {}
     function _G.QB.cache.ped() return _G.__ped end
+    function _G.QB.cache.playerId() return 0 end
+    function _G.QB.cache.weapon() return _G.__selectedWeapon end
     _G.QB.notify = _G.QB.notify or {}
     _G.__notifications = {}
     function _G.QB.notify.send(payload) table.insert(_G.__notifications, payload) end

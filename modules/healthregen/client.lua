@@ -23,7 +23,7 @@ if Config.healthRegen.multiplier == 1.0 and Config.healthRegen.limit == 0.0 then
 end
 
 Small.onSpawn(function()
-    local playerId = PlayerId()
+    local playerId = QB.cache.playerId()
     -- + 0.0 forces a float; the natives expect a float and an integer 0 can be
     -- marshalled as the wrong type by some FXServer builds.
     SetPlayerHealthRechargeMultiplier(playerId, Config.healthRegen.multiplier + 0.0)

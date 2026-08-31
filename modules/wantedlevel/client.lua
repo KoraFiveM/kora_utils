@@ -22,13 +22,13 @@ if not Config.wantedLevel.disable then return end
 -- spawn is immediately covered without waiting for the first interval tick.
 Small.onSpawn(function()
     SetMaxWantedLevel(0)
-    SetPoliceIgnorePlayer(PlayerId(), true)
+    SetPoliceIgnorePlayer(QB.cache.playerId(), true)
 end)
 
 Small.onInterval(Config.wantedLevel.interval, function()
     SetMaxWantedLevel(0)
 
-    local playerId = PlayerId()
+    local playerId = QB.cache.playerId()
     if GetPlayerWantedLevel(playerId) > 0 then
         SetPlayerWantedLevel(playerId, 0, false)
         SetPlayerWantedLevelNow(playerId, false)
