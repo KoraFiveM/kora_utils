@@ -81,8 +81,7 @@ If a medical/ambulance resource on your server also drives
 ```lua
 -- config.lua
 Config.blacklist = {
-    weapons = { 'WEAPON_RAILGUN', 'WEAPON_RPG', 'WEAPON_MINIGUN' }, -- stripped client-side on the next sweep
-    weaponSweepInterval = 500,
+    weapons = { 'WEAPON_RAILGUN', 'WEAPON_RPG', 'WEAPON_MINIGUN' }, -- stripped when qblib reports it selected
     serverWeaponSweepInterval = 250,
     notifyOnStrip = true,  -- QB.notify the player when a blacklisted weapon is taken away
 
@@ -159,11 +158,12 @@ respawn). Registers nothing when left at stock (`multiplier = 1.0, limit =
 0.0`).
 
 ### `blacklist` (client + server)
-`Config.blacklist` — `weapons`, `weaponSweepInterval`,
-`serverWeaponSweepInterval`, `notifyOnStrip`, `vehicles`, `peds`.
-- Client: sweeps `GetSelectedPedWeapon` on `weaponSweepInterval` and calls
+`Config.blacklist` — `weapons`, `serverWeaponSweepInterval`,
+`notifyOnStrip`, `vehicles`, `peds`.
+- Client: subscribes to `QB.cache.onChange('weapon')` and calls
   `RemoveWeaponFromPed` on a match, notifying via `QB.notify.send` when
-  `notifyOnStrip` is true.
+  `notifyOnStrip` is true. This reuses qblib's shared weapon cache instead of
+  running another client sweep.
 - Server: `entityCreating` + `CancelEvent()` refuses blacklisted
   vehicle/ped models outright (requires OneSync); a second server-side
   sweep on `serverWeaponSweepInterval` re-checks every connected player's

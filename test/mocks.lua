@@ -10,6 +10,7 @@ local M = {}
 function M.install()
     local threads = {}
     local eventHandlers = {}
+    local cacheChangeHandlers = {}
 
     -- --- Scheduling ---------------------------------------------------------
     -- CreateThread resumes the body once (like FiveM): a one-shot thread runs to
@@ -98,6 +99,10 @@ function M.install()
     function _G.QB.cache.ped() return _G.__ped end
     function _G.QB.cache.playerId() return 0 end
     function _G.QB.cache.weapon() return _G.__selectedWeapon end
+    function _G.QB.cache.onChange(key, handler)
+        cacheChangeHandlers[key] = cacheChangeHandlers[key] or {}
+        table.insert(cacheChangeHandlers[key], handler)
+    end
     _G.QB.notify = _G.QB.notify or {}
     _G.__notifications = {}
     function _G.QB.notify.send(payload) table.insert(_G.__notifications, payload) end
@@ -114,6 +119,10 @@ function M.install()
         end,
         ---Dispatch a lifecycle/game event into any AddEventHandler listeners.
         fire = function(name, ...) _G.TriggerEvent(name, ...) end,
+        cacheChange = function(key, value, oldValue)
+            if key == "weapon" then _G.__selectedWeapon = value end
+            for _, handler in ipairs(cacheChangeHandlers[key] or {}) do handler(value, oldValue) end
+        end,
     }
 end
 

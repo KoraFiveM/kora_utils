@@ -15,7 +15,6 @@ local handle = mocks.install()
 Config = {
     blacklist = {
         weapons = { "WEAPON_RPG", "WEAPON_MINIGUN" },
-        weaponSweepInterval = 500,
         notifyOnStrip = true,
         vehicles = { "rhino" },
         peds = {},
@@ -32,7 +31,7 @@ harness.test("client strips a held blacklisted weapon and notifies", function()
     _G.__notifications = {}
     _G.__selectedWeapon = joaat("WEAPON_RPG")
 
-    handle.step() -- one sweep tick with the RPG equipped
+    handle.cacheChange("weapon", joaat("WEAPON_RPG"), joaat("WEAPON_UNARMED"))
 
     harness.assertTrue(_G.__removedWeapons[joaat("WEAPON_RPG")], "the RPG should have been removed")
     harness.assertTrue(#_G.__notifications >= 1, "the player should have been notified")
@@ -43,7 +42,7 @@ harness.test("client leaves a non-blacklisted weapon alone", function()
     _G.__notifications = {}
     _G.__selectedWeapon = joaat("WEAPON_PISTOL")
 
-    handle.step()
+    handle.cacheChange("weapon", joaat("WEAPON_PISTOL"), joaat("WEAPON_UNARMED"))
 
     harness.assertFalse(_G.__removedWeapons[joaat("WEAPON_PISTOL")] or false, "an allowed weapon must not be removed")
     harness.assertEqual(#_G.__notifications, 0, "no notification for an allowed weapon")

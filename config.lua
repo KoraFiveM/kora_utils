@@ -68,7 +68,6 @@ Config.blacklist = {
         'WEAPON_RAYMINIGUN',
         'WEAPON_STINGER',
     },
-    weaponSweepInterval = 500,  -- ms between checks of the currently-held weapon
     serverWeaponSweepInterval = 250,
     notifyOnStrip = true,       -- QB.notify the player when a blacklisted weapon is taken away
 
