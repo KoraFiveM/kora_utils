@@ -62,8 +62,6 @@ Config.crouch = {
     crouchClipset = 'move_ped_crouched',    -- genuine crouched locomotion, not action/combat mode
     crouchStrafeClipset = 'move_ped_crouched_strafing',
     proneClipset = 'move_crawl',            -- prone/crawling locomotion
-    proneAnimDict = 'move_crawl',
-    proneAnim = 'onfront_fwd',
 }
 
 -- ===========================================================================

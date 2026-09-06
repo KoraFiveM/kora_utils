@@ -15,8 +15,6 @@ Config = {
         crouchClipset = 'move_ped_crouched',
         crouchStrafeClipset = 'move_ped_crouched_strafing',
         proneClipset = 'move_crawl',
-        proneAnimDict = 'move_crawl',
-        proneAnim = 'onfront_fwd',
     },
 }
 
@@ -41,12 +39,12 @@ H.test('a tap toggles a real crouched movement clipset and then standing', funct
     H.assertEqual(_G.__strafeClipset, nil)
 end)
 
-H.test('holding the bind enters prone without toggling back on release', function()
+H.test('holding the bind enters a player-controlled prone locomotion state', function()
     runtime.keybind('qbsmallresources_crouch', 'pressed')
     runtime.step()
     H.assertEqual(_G.__movementClipset, 'move_crawl')
-    H.assertEqual(_G.__lastAnimation.dict, 'move_crawl')
-    H.assertEqual(_G.__lastAnimation.clip, 'onfront_fwd')
+    H.assertEqual(_G.__strafeClipset, 'move_crawl')
+    H.assertEqual(_G.__lastAnimation, nil)
 
     runtime.keybind('qbsmallresources_crouch', 'released')
     H.assertEqual(_G.__movementClipset, 'move_crawl')

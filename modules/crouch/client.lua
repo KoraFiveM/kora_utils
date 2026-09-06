@@ -11,7 +11,6 @@ local keyHeld = false
 local pressId = 0
 local heldPressId = nil
 local loadedClipsets = {}
-local proneAnimationLoaded = false
 
 local function canChangeStance(ped)
     return DoesEntityExist(ped)
@@ -41,15 +40,9 @@ end
 local function releaseAssets()
     for clipset in pairs(loadedClipsets) do RemoveAnimSet(clipset) end
     loadedClipsets = {}
-    if proneAnimationLoaded then RemoveAnimDict(config.proneAnimDict) end
-    proneAnimationLoaded = false
 end
 
 local function stand(ped)
-    if stance == 'prone' then
-        StopAnimTask(ped, config.proneAnimDict, config.proneAnim, -4.0)
-    end
-
     restoreWalkStyle(ped)
     SetPedUsingActionMode(ped, false, -1, 0)
     releaseAssets()
@@ -69,7 +62,6 @@ local function crouch(ped)
         return false
     end
 
-    if stance == 'prone' then StopAnimTask(ped, config.proneAnimDict, config.proneAnim, -4.0) end
     SetPedUsingActionMode(ped, false, -1, 0)
     SetPedMovementClipset(ped, config.crouchClipset, 0.25)
     SetPedStrafeClipset(ped, config.crouchStrafeClipset)
@@ -79,14 +71,13 @@ end
 
 local function prone(ped)
     if not canChangeStance(ped) or not loadClipset(config.proneClipset) then return false end
-    local dict = QB.stream.loadAnimDict(config.proneAnimDict)
-    if dict == false then return false end
-    proneAnimationLoaded = true
 
     SetPedUsingActionMode(ped, false, -1, 0)
     SetPedMovementClipset(ped, config.proneClipset, 0.25)
     SetPedStrafeClipset(ped, config.proneClipset)
-    TaskPlayAnim(ped, config.proneAnimDict, config.proneAnim, 8.0, -8.0, -1, 2, 0.0, false, false, false)
+    -- The crawl clipset supplies the directional prone animations. Playing a
+    -- full-body animation here holds the ped in place and consumes movement
+    -- input, so leave locomotion under the player's control.
     stance = 'prone'
     return true
 end
