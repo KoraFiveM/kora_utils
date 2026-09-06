@@ -50,6 +50,23 @@ Config.healthRegen = {
 }
 
 -- ===========================================================================
+-- Crouch / prone -- replaces GTA's action-mode "crouch" (a combat stance)
+-- with the actual crouched movement clipset. Tap the bind to toggle between
+-- standing and crouching; hold it to lie prone. The binding is rebindable in
+-- FiveM settings under "Toggle crouch / hold prone".
+-- ===========================================================================
+Config.crouch = {
+    enabled = true,                         -- false = do not register the binding or any crouch work
+    keybind = 'LCONTROL',                   -- default keyboard binding; players may rebind it
+    holdDuration = 500,                     -- ms held before entering prone
+    crouchClipset = 'move_ped_crouched',    -- genuine crouched locomotion, not action/combat mode
+    crouchStrafeClipset = 'move_ped_crouched_strafing',
+    proneClipset = 'move_crawl',            -- prone/crawling locomotion
+    proneAnimDict = 'move_crawl',
+    proneAnim = 'onfront_fwd',
+}
+
+-- ===========================================================================
 -- Blacklist / ignore -- things the player is simply never allowed to have or
 -- do. Weapons are stripped client-side; vehicle spawns are refused
 -- server-side (a client-only check is trivially bypassed).

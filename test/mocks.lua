@@ -76,6 +76,35 @@ function M.install()
     function _G.GetPlayers() return {} end
     function _G.GetPlayerPed(_) return 0 end
 
+    -- Movement-state natives used by crouch. These deliberately record the
+    -- active clipset/animation so its smoke test exercises transitions rather
+    -- than merely checking that callbacks did not error.
+    _G.__movementClipset = nil
+    _G.__strafeClipset = nil
+    _G.__lastAnimation = nil
+    function _G.IsEntityDead(_) return false end
+    function _G.IsPedRagdoll(_) return false end
+    function _G.IsPedFalling(_) return false end
+    function _G.IsPedJumping(_) return false end
+    function _G.IsPedClimbing(_) return false end
+    function _G.IsPedSwimming(_) return false end
+    function _G.IsPedInAnyVehicle(_, _) return false end
+    function _G.RequestAnimSet(_) end
+    function _G.HasAnimSetLoaded(_) return true end
+    function _G.RemoveAnimSet(_) end
+    function _G.RequestAnimDict(_) end
+    function _G.HasAnimDictLoaded(_) return true end
+    function _G.DoesAnimDictExist(_) return true end
+    function _G.RemoveAnimDict(_) end
+    function _G.SetPedMovementClipset(_, clipset, _) _G.__movementClipset = clipset end
+    function _G.SetPedStrafeClipset(_, clipset) _G.__strafeClipset = clipset end
+    function _G.ResetPedMovementClipset(_, _) _G.__movementClipset = nil end
+    function _G.ResetPedStrafeClipset(_) _G.__strafeClipset = nil end
+    function _G.SetPedUsingActionMode(_, _, _, _) end
+    function _G.TaskPlayAnim(_, dict, clip, _, _, _, _, _, _, _, _) _G.__lastAnimation = { dict = dict, clip = clip } end
+    function _G.StopAnimTask(_, _, _, _) _G.__lastAnimation = nil end
+    function _G.GetResourceState(_) return 'missing' end
+
     -- Everything below is a no-op the scheduling/feature natives call; recorded
     -- only where a test asserts on it.
     for _, name in ipairs({
@@ -106,6 +135,15 @@ function M.install()
     _G.QB.notify = _G.QB.notify or {}
     _G.__notifications = {}
     function _G.QB.notify.send(payload) table.insert(_G.__notifications, payload) end
+    _G.QB.stream = _G.QB.stream or {}
+    function _G.QB.stream.loadClipSet(name) return name end
+    function _G.QB.stream.loadAnimDict(name) return name end
+    _G.__keybinds = {}
+    _G.QB.keybind = _G.QB.keybind or {}
+    function _G.QB.keybind.add(options)
+        _G.__keybinds[options.name] = options
+        return { remove = function() return true end }
+    end
 
     return {
         ---Resume every suspended tick thread once (one more loop iteration each).
@@ -122,6 +160,11 @@ function M.install()
         cacheChange = function(key, value, oldValue)
             if key == "weapon" then _G.__selectedWeapon = value end
             for _, handler in ipairs(cacheChangeHandlers[key] or {}) do handler(value, oldValue) end
+        end,
+        keybind = function(name, phase)
+            local binding = _G.__keybinds[name]
+            assert(binding, ('unknown keybind: %s'):format(name))
+            binding[phase == 'pressed' and 'onPressed' or 'onReleased']()
         end,
     }
 end

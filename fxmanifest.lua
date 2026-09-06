@@ -34,6 +34,7 @@ client_scripts {
     'modules/weaponwheel/client.lua',
     'modules/wantedlevel/client.lua',
     'modules/healthregen/client.lua',
+    'modules/crouch/client.lua',
     'modules/blacklist/client.lua',
     'modules/worlddepop/client.lua'
 }
