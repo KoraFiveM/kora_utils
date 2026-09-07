@@ -116,3 +116,6 @@ Config.worldDepop = {
     disableDriveby = false,    -- true = players can't fire from inside a vehicle
     reassertInterval = 10000,  -- ms; some population natives get reset by the engine, so reassert periodically
 }
+
+-- Registers this resource-owned configuration with qblib without changing its public Config table.
+if QB and QB.config and QB.config.adopt then Config = QB.config.adopt(Config) end
