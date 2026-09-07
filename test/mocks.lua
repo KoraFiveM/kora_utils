@@ -82,6 +82,9 @@ function M.install()
     _G.__movementClipset = nil
     _G.__strafeClipset = nil
     _G.__lastAnimation = nil
+    _G.__controlsPressed = {}
+    _G.__gameTimer = 0
+    _G.__heading = 0.0
     function _G.IsEntityDead(_) return false end
     function _G.IsPedRagdoll(_) return false end
     function _G.IsPedFalling(_) return false end
@@ -101,8 +104,16 @@ function M.install()
     function _G.ResetPedMovementClipset(_, _) _G.__movementClipset = nil end
     function _G.ResetPedStrafeClipset(_) _G.__strafeClipset = nil end
     function _G.SetPedUsingActionMode(_, _, _, _) end
-    function _G.TaskPlayAnim(_, dict, clip, _, _, _, _, _, _, _, _) _G.__lastAnimation = { dict = dict, clip = clip } end
+    function _G.TaskPlayAnim(_, dict, clip, _, _, _, flag, _, _, _, _) _G.__lastAnimation = { dict = dict, clip = clip, flag = flag } end
+    function _G.TaskPlayAnimAdvanced(_, dict, clip, _, _, _, _, _, _, _, _, _, flag, animTime, _, _)
+        _G.__lastAnimation = { dict = dict, clip = clip, flag = flag, animTime = animTime }
+    end
     function _G.StopAnimTask(_, _, _, _) _G.__lastAnimation = nil end
+    function _G.GetEntityCoords(_) return { x = 1.0, y = 2.0, z = 3.0 } end
+    function _G.GetEntityHeading(_) return _G.__heading end
+    function _G.SetEntityHeading(_, heading) _G.__heading = heading end
+    function _G.IsControlPressed(_, control) return _G.__controlsPressed[control] == true end
+    function _G.GetGameTimer() return _G.__gameTimer end
     function _G.GetResourceState(_) return 'missing' end
 
     -- Everything below is a no-op the scheduling/feature natives call; recorded
@@ -166,6 +177,8 @@ function M.install()
             assert(binding, ('unknown keybind: %s'):format(name))
             binding[phase == 'pressed' and 'onPressed' or 'onReleased']()
         end,
+        control = function(control, pressed) _G.__controlsPressed[control] = pressed end,
+        advanceTime = function(ms) _G.__gameTimer = _G.__gameTimer + ms end,
     }
 end
 

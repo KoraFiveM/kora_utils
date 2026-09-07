@@ -11,6 +11,14 @@ local keyHeld = false
 local pressId = 0
 local heldPressId = nil
 local loadedClipsets = {}
+local proneAnimationLoaded = false
+local proneMotion = nil
+local proneStepEndsAt = 0
+
+local proneStepDuration = {
+    forward = 820,
+    backward = 990,
+}
 
 local function canChangeStance(ped)
     return DoesEntityExist(ped)
@@ -40,9 +48,20 @@ end
 local function releaseAssets()
     for clipset in pairs(loadedClipsets) do RemoveAnimSet(clipset) end
     loadedClipsets = {}
+    if proneAnimationLoaded then RemoveAnimDict(config.proneAnimDict) end
+    proneAnimationLoaded = false
+end
+
+local function stopProneAnimation(ped)
+    if not proneAnimationLoaded then return end
+    StopAnimTask(ped, config.proneAnimDict, config.proneForwardAnim, -4.0)
+    StopAnimTask(ped, config.proneAnimDict, config.proneBackwardAnim, -4.0)
+    proneMotion = nil
+    proneStepEndsAt = 0
 end
 
 local function stand(ped)
+    if stance == 'prone' then stopProneAnimation(ped) end
     restoreWalkStyle(ped)
     SetPedUsingActionMode(ped, false, -1, 0)
     releaseAssets()
@@ -62,6 +81,7 @@ local function crouch(ped)
         return false
     end
 
+    if stance == 'prone' then stopProneAnimation(ped) end
     SetPedUsingActionMode(ped, false, -1, 0)
     SetPedMovementClipset(ped, config.crouchClipset, 0.25)
     SetPedStrafeClipset(ped, config.crouchStrafeClipset)
@@ -70,16 +90,42 @@ local function crouch(ped)
 end
 
 local function prone(ped)
-    if not canChangeStance(ped) or not loadClipset(config.proneClipset) then return false end
+    if not canChangeStance(ped) then return false end
+    local dict = QB.stream.loadAnimDict(config.proneAnimDict)
+    if dict == false then return false end
+    proneAnimationLoaded = true
 
     SetPedUsingActionMode(ped, false, -1, 0)
-    SetPedMovementClipset(ped, config.proneClipset, 0.25)
-    SetPedStrafeClipset(ped, config.proneClipset)
-    -- The crawl clipset supplies the directional prone animations. Playing a
-    -- full-body animation here holds the ped in place and consumes movement
-    -- input, so leave locomotion under the player's control.
+    -- `move_crawl` is an animation dictionary, not a movement clipset. Passing
+    -- it to SetPedMovementClipset leaves the skeleton without valid locomotion
+    -- clips and produces a T-pose. Clear any crouch clipsets, then hold the end
+    -- of a real crawl animation as the prone idle pose.
+    ResetPedMovementClipset(ped, 0.25)
+    ResetPedStrafeClipset(ped)
+    local coords = GetEntityCoords(ped)
+    TaskPlayAnimAdvanced(ped, config.proneAnimDict, config.proneForwardAnim,
+        coords.x, coords.y, coords.z, 0.0, 0.0, GetEntityHeading(ped),
+        8.0, -8.0, -1, 2, 1.0, false, false)
+    proneMotion = 'idle'
+    proneStepEndsAt = 0
     stance = 'prone'
     return true
+end
+
+local function playProneIdle(ped, clip)
+    local coords = GetEntityCoords(ped)
+    TaskPlayAnimAdvanced(ped, config.proneAnimDict, clip,
+        coords.x, coords.y, coords.z, 0.0, 0.0, GetEntityHeading(ped),
+        8.0, -8.0, -1, 2, 1.0, false, false)
+    proneMotion = 'idle'
+    proneStepEndsAt = 0
+end
+
+local function playProneStep(ped, direction, now)
+    local clip = direction == 'forward' and config.proneForwardAnim or config.proneBackwardAnim
+    TaskPlayAnim(ped, config.proneAnimDict, clip, 8.0, -8.0, -1, 2, 0.0, false, false, false)
+    proneMotion = direction
+    proneStepEndsAt = now + proneStepDuration[direction]
 end
 
 local function toggleCrouch()
@@ -104,8 +150,7 @@ QB.keybind.add({
         Small.once(function()
             Wait(config.holdDuration)
             if not keyHeld or pressId ~= currentPress then return end
-            heldPressId = currentPress
-            prone(PlayerPedId())
+            if prone(PlayerPedId()) then heldPressId = currentPress end
         end)
     end,
     onReleased = function()
@@ -134,6 +179,29 @@ Small.onFrame(function()
     if stance == 'prone' then
         DisableControlAction(0, 21, true) -- INPUT_SPRINT
         DisableControlAction(0, 22, true) -- INPUT_JUMP
+
+        local forward = IsControlPressed(0, 32) -- INPUT_MOVE_UP_ONLY
+        local backward = IsControlPressed(0, 33) -- INPUT_MOVE_DOWN_ONLY
+        local now = GetGameTimer()
+
+        if forward then
+            if proneMotion ~= 'forward' or now >= proneStepEndsAt then
+                playProneStep(ped, 'forward', now)
+            end
+        elseif backward then
+            if proneMotion ~= 'backward' or now >= proneStepEndsAt then
+                playProneStep(ped, 'backward', now)
+            end
+        elseif proneMotion ~= 'idle' then
+            local clip = proneMotion == 'backward' and config.proneBackwardAnim or config.proneForwardAnim
+            playProneIdle(ped, clip)
+        end
+
+        if IsControlPressed(0, 34) then -- INPUT_MOVE_LEFT_ONLY
+            SetEntityHeading(ped, GetEntityHeading(ped) + config.proneTurnSpeed)
+        elseif IsControlPressed(0, 35) then -- INPUT_MOVE_RIGHT_ONLY
+            SetEntityHeading(ped, GetEntityHeading(ped) - config.proneTurnSpeed)
+        end
     end
 end)
 

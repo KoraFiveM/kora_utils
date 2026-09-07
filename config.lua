@@ -61,7 +61,10 @@ Config.crouch = {
     holdDuration = 500,                     -- ms held before entering prone
     crouchClipset = 'move_ped_crouched',    -- genuine crouched locomotion, not action/combat mode
     crouchStrafeClipset = 'move_ped_crouched_strafing',
-    proneClipset = 'move_crawl',            -- prone/crawling locomotion
+    proneAnimDict = 'move_crawl',           -- animation dictionary; this is not a movement clipset
+    proneForwardAnim = 'onfront_fwd',
+    proneBackwardAnim = 'onfront_bwd',
+    proneTurnSpeed = 1.0,                   -- degrees per frame while turning
 }
 
 -- ===========================================================================

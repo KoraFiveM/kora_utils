@@ -14,7 +14,10 @@ Config = {
         holdDuration = 500,
         crouchClipset = 'move_ped_crouched',
         crouchStrafeClipset = 'move_ped_crouched_strafing',
-        proneClipset = 'move_crawl',
+        proneAnimDict = 'move_crawl',
+        proneForwardAnim = 'onfront_fwd',
+        proneBackwardAnim = 'onfront_bwd',
+        proneTurnSpeed = 1.0,
     },
 }
 
@@ -42,12 +45,43 @@ end)
 H.test('holding the bind enters a player-controlled prone locomotion state', function()
     runtime.keybind('qbsmallresources_crouch', 'pressed')
     runtime.step()
-    H.assertEqual(_G.__movementClipset, 'move_crawl')
-    H.assertEqual(_G.__strafeClipset, 'move_crawl')
-    H.assertEqual(_G.__lastAnimation, nil)
+    H.assertEqual(_G.__movementClipset, nil)
+    H.assertEqual(_G.__strafeClipset, nil)
+    H.assertEqual(_G.__lastAnimation.dict, 'move_crawl')
+    H.assertEqual(_G.__lastAnimation.clip, 'onfront_fwd')
+    H.assertEqual(_G.__lastAnimation.animTime, 1.0)
 
     runtime.keybind('qbsmallresources_crouch', 'released')
-    H.assertEqual(_G.__movementClipset, 'move_crawl')
+    H.assertEqual(_G.__lastAnimation.clip, 'onfront_fwd')
+
+    runtime.control(32, true)
+    runtime.step()
+    H.assertEqual(_G.__lastAnimation.clip, 'onfront_fwd')
+    H.assertEqual(_G.__lastAnimation.flag, 2)
+    H.assertEqual(_G.__lastAnimation.animTime, nil)
+
+    runtime.advanceTime(820)
+    runtime.step()
+    H.assertEqual(_G.__lastAnimation.clip, 'onfront_fwd')
+
+    runtime.control(32, false)
+    runtime.control(33, true)
+    runtime.step()
+    H.assertEqual(_G.__lastAnimation.clip, 'onfront_bwd')
+
+    runtime.control(33, false)
+    runtime.step()
+    H.assertEqual(_G.__lastAnimation.clip, 'onfront_bwd')
+    H.assertEqual(_G.__lastAnimation.animTime, 1.0)
+
+    runtime.control(34, true)
+    runtime.step()
+    H.assertEqual(_G.__heading, 1.0)
+
+    runtime.control(34, false)
+    runtime.keybind('qbsmallresources_crouch', 'pressed')
+    runtime.keybind('qbsmallresources_crouch', 'released')
+    H.assertEqual(_G.__lastAnimation, nil)
 end)
 
 H.report('crouch')
