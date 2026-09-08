@@ -29,6 +29,15 @@ Config.weaponWheel = {
 }
 
 -- ===========================================================================
+-- Vehicle rewards -- GTA can award a weapon when the player enters some
+-- service vehicles, including police cars. Inventory-managed servers should
+-- suppress that native reward so every weapon has an authoritative item source.
+-- ===========================================================================
+Config.vehicleRewards = {
+    disable = true, -- true = prevent GTA from awarding weapons for entering service vehicles
+}
+
+-- ===========================================================================
 -- Wanted level -- never let the player accrue a vanilla NPC-police wanted
 -- level (server RP jobs handle the law, not GTA's star system). Also silences
 -- the NPC dispatch services (no auto-spawned cops/helis/swat).

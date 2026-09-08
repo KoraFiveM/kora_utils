@@ -32,6 +32,7 @@ client_scripts {
 
     'modules/idlecamera/client.lua',
     'modules/weaponwheel/client.lua',
+    'modules/vehiclerewards/client.lua',
     'modules/wantedlevel/client.lua',
     'modules/healthregen/client.lua',
     'modules/crouch/client.lua',

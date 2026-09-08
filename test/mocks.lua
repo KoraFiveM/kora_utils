@@ -69,6 +69,7 @@ function M.install()
     _G.__ped = 10
     _G.__selectedWeapon = 0
     _G.__removedWeapons = {}
+    _G.__vehicleRewardDisables = 0
     function _G.PlayerPedId() return _G.__ped end
     function _G.PlayerId() return 0 end
     function _G.GetSelectedPedWeapon(_) return _G.__selectedWeapon end
@@ -130,6 +131,7 @@ function M.install()
     }) do
         if _G[name] == nil then _G[name] = function() end end
     end
+    function _G.DisablePlayerVehicleRewards(_) _G.__vehicleRewardDisables = _G.__vehicleRewardDisables + 1 end
     -- GetPlayerWantedLevel needs a real return; default 0 (no level).
     _G.GetPlayerWantedLevel = function() return _G.__wantedLevel or 0 end
 

@@ -15,6 +15,7 @@ trimming the config has a real performance payoff, not just a cosmetic one.
 |---|---|---|---|
 | `idlecamera` | client | Kills GTA's cinematic idle camera (the pan-away after ~30s of no input) | `InvalidateIdleCam`, `InvalidateVehicleIdleCam` |
 | `weaponwheel` | client | Removes the radial weapon-select wheel; optionally stops weapon auto-swap | `BlockWeaponWheelThisFrame`, `DisableControlAction(0,37)`, `SetWeaponsNoAutoswap` |
+| `vehiclerewards` | client | Stops GTA awarding a weapon for entering service vehicles, including police cars | `DisablePlayerVehicleRewards` |
 | `wantedlevel` | client | Forces the NPC-police wanted level to 0 and (optionally) silences NPC dispatch | `SetMaxWantedLevel(0)`, `EnableDispatchService`, `SetPoliceIgnorePlayer` |
 | `healthregen` | client | Zeroes GTA's passive health regeneration so damage sticks | `SetPlayerHealthRechargeMultiplier`, `SetPlayerHealthRechargeLimit` |
 | `crouch` | client | Replaces GTA's combat/action stance with real crouching; tap to toggle, hold for prone | `SetPedMovementClipset`, `SetPedStrafeClipset`, `TaskPlayAnim` |
@@ -35,6 +36,7 @@ One flat `Config` table, one section per feature, each value commented. See
 ```lua
 Config.idleCamera.disable   = true      -- kill the idle camera
 Config.weaponWheel.disable  = true      -- remove the weapon wheel
+Config.vehicleRewards.disable = true    -- stop GTA police-car weapon rewards
 Config.wantedLevel.disable  = true      -- suppress the NPC wanted level
 Config.healthRegen.multiplier = 0.0     -- 0.0 = no passive healing; 1.0 = stock
 Config.crouch.keybind         = 'LCONTROL' -- tap = crouch toggle; hold = prone
