@@ -14,6 +14,7 @@ local loadedClipsets = {}
 local proneAnimationLoaded = false
 local proneMotion = nil
 local proneStepEndsAt = 0
+local frameWatcherActive = false
 
 local proneStepDuration = {
     forward = 820,
@@ -30,6 +31,66 @@ local function canChangeStance(ped)
         and not IsPedSwimming(ped)
         and not IsPedInAnyVehicle(ped, false)
         and not (LocalPlayer and LocalPlayer.state and LocalPlayer.state['qbemotemenu:active'])
+end
+
+-- Forward declared: stand() stops the frame watcher, and the watcher itself
+-- can call stand() when canChangeStance fails mid-loop.
+local stand
+
+local function stopFrameWatcher()
+    frameWatcherActive = false
+end
+
+local function startFrameWatcher()
+    if frameWatcherActive then return end
+    frameWatcherActive = true
+
+    CreateThread(function()
+        while frameWatcherActive do
+            -- INPUT_DUCK (36) is the stock action/fighting stance. It must be
+            -- disabled every frame the watcher is running so the keybind
+            -- never leaves the player in that stance.
+            DisableControlAction(0, 36, true)
+
+            if stance ~= 'standing' then
+                local ped = PlayerPedId()
+                if not canChangeStance(ped) then
+                    stand(ped)
+                else
+                    SetPedUsingActionMode(ped, false, -1, 0)
+                    if stance == 'prone' then
+                        DisableControlAction(0, 21, true) -- INPUT_SPRINT
+                        DisableControlAction(0, 22, true) -- INPUT_JUMP
+
+                        local forward = IsControlPressed(0, 32) -- INPUT_MOVE_UP_ONLY
+                        local backward = IsControlPressed(0, 33) -- INPUT_MOVE_DOWN_ONLY
+                        local now = GetGameTimer()
+
+                        if forward then
+                            if proneMotion ~= 'forward' or now >= proneStepEndsAt then
+                                playProneStep(ped, 'forward', now)
+                            end
+                        elseif backward then
+                            if proneMotion ~= 'backward' or now >= proneStepEndsAt then
+                                playProneStep(ped, 'backward', now)
+                            end
+                        elseif proneMotion ~= 'idle' then
+                            local clip = proneMotion == 'backward' and config.proneBackwardAnim or config.proneForwardAnim
+                            playProneIdle(ped, clip)
+                        end
+
+                        if IsControlPressed(0, 34) then -- INPUT_MOVE_LEFT_ONLY
+                            SetEntityHeading(ped, GetEntityHeading(ped) + config.proneTurnSpeed)
+                        elseif IsControlPressed(0, 35) then -- INPUT_MOVE_RIGHT_ONLY
+                            SetEntityHeading(ped, GetEntityHeading(ped) - config.proneTurnSpeed)
+                        end
+                    end
+                end
+            end
+
+            Wait(0)
+        end
+    end)
 end
 
 local function restoreWalkStyle(ped)
@@ -60,9 +121,10 @@ local function stopProneAnimation(ped)
     proneStepEndsAt = 0
 end
 
-local function stand(ped)
+stand = function(ped)
     if stance == 'prone' then stopProneAnimation(ped) end
     restoreWalkStyle(ped)
+    stopFrameWatcher()
     SetPedUsingActionMode(ped, false, -1, 0)
     releaseAssets()
     stance = 'standing'
@@ -86,6 +148,7 @@ local function crouch(ped)
     SetPedMovementClipset(ped, config.crouchClipset, 0.25)
     SetPedStrafeClipset(ped, config.crouchStrafeClipset)
     stance = 'crouched'
+    startFrameWatcher()
     return true
 end
 
@@ -109,10 +172,11 @@ local function prone(ped)
     proneMotion = 'idle'
     proneStepEndsAt = 0
     stance = 'prone'
+    startFrameWatcher()
     return true
 end
 
-local function playProneIdle(ped, clip)
+function playProneIdle(ped, clip)
     local coords = GetEntityCoords(ped)
     TaskPlayAnimAdvanced(ped, config.proneAnimDict, clip,
         coords.x, coords.y, coords.z, 0.0, 0.0, GetEntityHeading(ped),
@@ -121,7 +185,7 @@ local function playProneIdle(ped, clip)
     proneStepEndsAt = 0
 end
 
-local function playProneStep(ped, direction, now)
+function playProneStep(ped, direction, now)
     local clip = direction == 'forward' and config.proneForwardAnim or config.proneBackwardAnim
     TaskPlayAnim(ped, config.proneAnimDict, clip, 8.0, -8.0, -1, 2, 0.0, false, false, false)
     proneMotion = direction
@@ -163,54 +227,14 @@ QB.keybind.add({
     end,
 })
 
--- INPUT_DUCK (36) is the stock action/fighting stance. It must be disabled
--- every frame so the keybind above never leaves the player in that stance.
-Small.onFrame(function()
-    DisableControlAction(0, 36, true)
-
-    if stance == 'standing' then return end
-    local ped = PlayerPedId()
-    if not canChangeStance(ped) then
-        stand(ped)
-        return
-    end
-
-    SetPedUsingActionMode(ped, false, -1, 0)
-    if stance == 'prone' then
-        DisableControlAction(0, 21, true) -- INPUT_SPRINT
-        DisableControlAction(0, 22, true) -- INPUT_JUMP
-
-        local forward = IsControlPressed(0, 32) -- INPUT_MOVE_UP_ONLY
-        local backward = IsControlPressed(0, 33) -- INPUT_MOVE_DOWN_ONLY
-        local now = GetGameTimer()
-
-        if forward then
-            if proneMotion ~= 'forward' or now >= proneStepEndsAt then
-                playProneStep(ped, 'forward', now)
-            end
-        elseif backward then
-            if proneMotion ~= 'backward' or now >= proneStepEndsAt then
-                playProneStep(ped, 'backward', now)
-            end
-        elseif proneMotion ~= 'idle' then
-            local clip = proneMotion == 'backward' and config.proneBackwardAnim or config.proneForwardAnim
-            playProneIdle(ped, clip)
-        end
-
-        if IsControlPressed(0, 34) then -- INPUT_MOVE_LEFT_ONLY
-            SetEntityHeading(ped, GetEntityHeading(ped) + config.proneTurnSpeed)
-        elseif IsControlPressed(0, 35) then -- INPUT_MOVE_RIGHT_ONLY
-            SetEntityHeading(ped, GetEntityHeading(ped) - config.proneTurnSpeed)
-        end
-    end
-end)
-
 Small.onSpawn(function()
     -- A respawn creates a new ped with stock movement. Forget the old ped's
-    -- state so a held/released key cannot apply a stale stance to the new one.
+    -- state so a held/released key cannot apply a stale stance to the new one,
+    -- and stop the watcher so it isn't left running against the new ped.
     stance = 'standing'
     keyHeld = false
     heldPressId = nil
+    stopFrameWatcher()
     releaseAssets()
 end)
 
