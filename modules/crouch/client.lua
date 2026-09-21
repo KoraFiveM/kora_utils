@@ -107,7 +107,7 @@ local function restoreWalkStyle(ped)
 end
 
 local function releaseAssets()
-    for clipset in pairs(loadedClipsets) do RemoveAnimSet(clipset) end
+    for clipset in pairs(loadedClipsets) do RemoveClipSet(clipset) end
     loadedClipsets = {}
     if proneAnimationLoaded then RemoveAnimDict(config.proneAnimDict) end
     proneAnimationLoaded = false

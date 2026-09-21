@@ -95,7 +95,7 @@ function M.install()
     function _G.IsPedInAnyVehicle(_, _) return false end
     function _G.RequestAnimSet(_) end
     function _G.HasAnimSetLoaded(_) return true end
-    function _G.RemoveAnimSet(_) end
+    function _G.RemoveClipSet(_) end
     function _G.RequestAnimDict(_) end
     function _G.HasAnimDictLoaded(_) return true end
     function _G.DoesAnimDictExist(_) return true end
