@@ -76,4 +76,71 @@ harness.test("hashSet builds a hash-keyed lookup and tolerates nil", function()
     harness.assertFalse(next(empty) and true or false, "nil input yields an empty set")
 end)
 
+harness.test("dispatch and autoswap options emit their documented native calls", function()
+    for _, case in ipairs({
+        { disable = false, option = true },
+        { disable = true, option = false },
+        { disable = true, option = true },
+        { disable = true },
+    }) do
+        Small, QB = nil, nil
+        local runtime = mocks.install()
+        dofile(repoRoot .. "client/core.lua")
+        Config = {
+            wantedLevel = { disable = case.disable, disableDispatch = case.option },
+            weaponWheel = { disable = case.disable, blockAutoSwap = case.option },
+        }
+        local flags, dispatch, autoswap, waits = {}, {}, {}, {}
+        function SetPedConfigFlag(ped, flag, enabled)
+            flags[#flags + 1] = { ped, flag, enabled }
+        end
+        function EnableDispatchService(service, enabled)
+            dispatch[#dispatch + 1] = { service, enabled }
+        end
+        function SetWeaponsNoAutoswap(enabled)
+            autoswap[#autoswap + 1] = enabled
+        end
+        local wait = Wait
+        Wait = function(ms) waits[#waits + 1] = ms; return wait(ms) end
+        -- Each client chunk has its own yielding FiveM host execution.
+        CreateThread(function() dofile(repoRoot .. "modules/wantedlevel/client.lua") end)
+        CreateThread(function() dofile(repoRoot .. "modules/weaponwheel/client.lua") end)
+        local requested = case.disable and case.option
+        harness.assertEqual(#dispatch, requested and 15 or 0,
+            "dispatch option must emit one disable for each documented service")
+        harness.assertEqual(#autoswap, requested and 1 or 0,
+            "autoswap option must apply on the initial spawn")
+        harness.assertEqual(#flags, case.disable and 2 or 0, "existing initial ped flags remain")
+        if case.disable then
+            harness.assertEqual(flags[1][1], 10)
+            harness.assertEqual(flags[1][2], 42)
+            harness.assertEqual(flags[2][2], 48)
+        else
+            harness.assertEqual(#waits, 0, "disabled modules register no scheduling work")
+        end
+        runtime.fire("playerSpawned")
+        runtime.fire("QBCore:Client:OnPlayerLoaded")
+        harness.assertEqual(#autoswap, requested and 3 or 0, "autoswap reasserts through existing lifecycle events")
+        _G.__ped = 99
+        runtime.step()
+        harness.assertEqual(#dispatch, requested and 30 or 0, "dispatch reuses the existing periodic work")
+        harness.assertEqual(#autoswap, requested and 4 or 0, "autoswap follows the existing ped replacement watcher")
+        harness.assertEqual(#flags, case.disable and 4 or 0, "existing flag cadence remains")
+        for index, call in ipairs(dispatch) do
+            harness.assertEqual(call[1], (index - 1) % 15 + 1, "dispatch service order and bounds remain exact")
+            harness.assertEqual(call[2], false, "dispatch disabling passes boolean false")
+        end
+        for _, enabled in ipairs(autoswap) do harness.assertEqual(enabled, true) end
+        for _, call in ipairs(flags) do harness.assertEqual(call[3], true) end
+        if case.disable then
+            harness.assertEqual(flags[3][1], 99, "periodic wanted flag reads the current ped")
+            harness.assertEqual(flags[4][1], 99, "periodic wheel flag reads the current ped")
+            for _, ms in ipairs(waits) do
+                harness.assertTrue(ms == 2000 or (requested and ms == 1000),
+                    "only existing flag cadence and spawn watcher sleeps are used")
+            end
+        end
+    end
+end)
+
 harness.report("core")
