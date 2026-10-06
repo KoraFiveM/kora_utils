@@ -6,8 +6,9 @@ if Config.weaponWheel.blockAutoSwap then
     end)
 end
 
-while true do
+local function disableWeaponWheel()
     SetPedConfigFlag(QB.cache.ped(), 48, true) -- Disable weapon wheel
-    Wait(2000)
-    
 end
+
+disableWeaponWheel()
+Small.onInterval(2000, disableWeaponWheel)
