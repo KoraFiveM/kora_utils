@@ -10,7 +10,7 @@ not a qblib module: it has its own resource namespace (`Small`), loads
 
 Scope is deliberately the *passive tweak* half of the originals. Feature-sized
 things the originals also bundle — consumables, carwash, seatbelt physics,
-binoculars, pointing, discord presence, fireworks, teleports — are intentionally
+binoculars, pointing, discord presence, fireworks, teleports — are normally
 OUT of scope here; they deserve their own resources. Don't grow this resource
 into a monolith just because the originals were one.
 
@@ -93,3 +93,6 @@ assertion, not a failure.
   are refused server-side (only the server can reliably refuse a networked
   entity). Don't "simplify" the vehicle block into a client loop — it would be
   security theatre.
+
+## Authorized compatibility extension
+The QBCore backwards-compatibility implementation explicitly added `modules/seatbelt` with real harness item authority and lifecycle. Keep its client work on the existing coordinator; preserve server ownership, elapsed-time checks and inventory mutations. This user-authorized exception does not turn unrelated feature work into scope.

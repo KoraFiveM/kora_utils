@@ -79,3 +79,17 @@ each spawning its own loop:
   `SetPlayerHealthRechargeMultiplier`, `SetPoliceIgnorePlayer`).
 
 See `AGENTS.md` for why this shape was chosen and how to add a feature.
+
+## Legacy controls compatibility
+
+`qb-smallresources:addDisableControls`, `removeDisableControls` and `getDisableControls` use the existing frame coordinator to apply input group 2 suppression. Number and dense-array arguments are accepted; removal removes one matching entry for each requested control, as upstream. Stopping the caller releases its entries. These APIs return no success placeholder. Harness and seatbelt gameplay now live in `modules/seatbelt`; see the lifecycle contract below.
+
+## Seatbelts and harnesses
+
+`Config.seatbelt.enabled` enables the real vehicle lifecycle and `toggleseatbelt` (B). `HasHarness` and `HasSeatbeltOn` are native and `qb-smallresources` client exports. Vehicle exit, death, logout and resource stop clear state and exit-control suppression. The HUD consumes `seatbelt:client:ToggleSeatbelt`; its former cosmetic B-key state is removed.
+
+The server registers the existing `harness` usable item. It validates the actual slot, supported vehicle and routing bucket, issues a short-lived action, enforces the five-second equip duration and consumes a use through inventory authority before publishing equipped state. Cancellation never consumes a use. Pending actions cannot be replayed or substituted. Legacy `equip:harness(item)` and `seatbelt:DoHarnessDamage(hp, item)` are supported, but hp/item metadata from clients are never trusted; only the server's equipped item can lose durability after a fresh server-observed body-health loss. The last equipped use consumes its item and provides one final protection. Errors, dependency restarts and disconnects revoke pending authority.
+
+Crash ejection follows the pinned stock speed-drop/body-damage probability thresholds. Local movement physics and suppression run through the existing frame coordinator, with no vehicle natives while on foot. The sampler preserves upstream's retained 25-frame speed peak and delayed body-damage delta for multi-frame deceleration. Client collision physics, input remapping, audio and two-player item transfers still need connected FXServer validation.
+
+Behavioral reference: qbcore-fivem/qb-smallresources at e69a95786ef29e53d962e4e0ec57eef36e195561, client/seatbelt.lua and server/main.lua. Native server API availability checked against https://runtime.fivem.net/doc/natives_cfx.json.

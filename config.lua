@@ -126,5 +126,16 @@ Config.worldDepop = {
     reassertInterval = 10000,  -- ms; some population natives get reset by the engine, so reassert periodically
 }
 
+-- Legacy seatbelt/harness lifecycle. Durability and equipped ownership are
+-- checked server-side; the client owns local driving physics and controls.
+Config.HarnessUses = 20
+Config.seatbelt = {
+    enabled = true,
+    keybind = 'B',
+    equipDuration = 5000,
+    actionLifetime = 30000,
+    crashCooldown = 1000,
+}
+
 -- Registers this resource-owned configuration with qblib without changing its public Config table.
 if QB and QB.config and QB.config.adopt then Config = QB.config.adopt(Config) end

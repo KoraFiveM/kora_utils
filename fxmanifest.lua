@@ -1,5 +1,6 @@
 fx_version 'cerulean'
 game 'gta5'
+provide 'qb-smallresources'
 lua54 'yes'
 use_experimental_fxv2_oal 'yes'
 
@@ -8,7 +9,7 @@ author 'Jamie'
 version '1.0.0'
 description 'A bundle of small always-on world/player tweaks built on qblib -- idle-camera kill, weapon-wheel removal, wanted-level suppression, zeroed health regen, and weapon/vehicle blacklists, all sharing one tick coordinator.'
 
-dependency 'qblib'
+dependencies { 'qblib', 'qbcore', 'qbinventory' }
 
 -- Pulls in the QB.* proxy (QB.notify is used by modules/blacklist/client.lua).
 -- See qblib's AGENTS.md for why a consumer resource loads init.lua this way.
@@ -29,6 +30,8 @@ shared_scripts {
 client_scripts {
     'client/core.lua',
     'client/util.lua',
+    'client/compat.lua',
+    'modules/seatbelt/client.lua',
 
     'modules/idlecamera/client.lua',
     'modules/weaponwheel/client.lua',
@@ -43,5 +46,6 @@ client_scripts {
 -- Only the vehicle/ped blacklist has a server half (authoritative spawn refusal
 -- via OneSync's entityCreating). config.lua above already loaded it Config.
 server_scripts {
-    'modules/blacklist/server.lua'
+    'modules/blacklist/server.lua',
+    'modules/seatbelt/server.lua'
 }
