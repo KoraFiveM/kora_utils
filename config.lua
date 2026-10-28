@@ -1,4 +1,4 @@
--- kora_smallresources configuration.
+-- kora_utils configuration.
 --
 -- One flat table, one section per feature, a trailing comment on every value --
 -- matching kora_lib's config.lua style. Every feature is independently toggleable;

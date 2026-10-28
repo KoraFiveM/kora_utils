@@ -4,7 +4,7 @@ provide 'qb-smallresources'
 lua54 'yes'
 use_experimental_fxv2_oal 'yes'
 
-name 'kora_smallresources'
+name 'kora_utils'
 -- Keep the legacy resource name resolvable for exports['qbsmallresources'] callers.
 provide 'qbsmallresources'
 author 'Jamie'

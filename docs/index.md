@@ -1,6 +1,6 @@
 ---
 layout: default
-title: kora_smallresources
+title: kora_utils
 ---
 
 A bundle of small, always-on world and player tweaks built on `kora_lib` — the
@@ -29,7 +29,7 @@ cosmetic one.
 `server.cfg`, in this order:
 ```
 ensure kora_lib
-ensure kora_smallresources
+ensure kora_utils
 ```
 The server-side vehicle/ped blacklist relies on OneSync (`entityCreating`),
 which is assumed on — the same assumption kora_core makes.
@@ -38,7 +38,7 @@ which is assumed on — the same assumption kora_core makes.
 
 This resource ships no exports, commands, or client/server events of its
 own — every mini-feature is switched on and tuned entirely through
-`config.lua`. "Using" kora_smallresources means editing that file. A few
+`config.lua`. "Using" kora_utils means editing that file. A few
 concrete slices of it:
 
 ### Kill the idle camera and the weapon wheel
@@ -127,7 +127,7 @@ Remember to list the new file explicitly in `fxmanifest.lua` after
 
 ## API reference
 
-kora_smallresources has no `exports`, no `RegisterCommand`, and no
+kora_utils has no `exports`, no `RegisterCommand`, and no
 `RegisterNetEvent` surface — it's entirely config-driven. What follows is the
 mechanism and native calls behind each feature, and the internal tick
 coordinator that ties them together.

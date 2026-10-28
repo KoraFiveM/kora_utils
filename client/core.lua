@@ -1,4 +1,4 @@
--- kora_smallresources client core -- the shared tick coordinator every feature
+-- kora_utils client core -- the shared tick coordinator every feature
 -- module schedules its work through, instead of each module spawning its own
 -- `while true ... Wait(0)` thread.
 --

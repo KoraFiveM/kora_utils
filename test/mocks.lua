@@ -1,4 +1,4 @@
--- Minimal FiveM native stand-ins for smoke-testing kora_smallresources under plain
+-- Minimal FiveM native stand-ins for smoke-testing kora_utils under plain
 -- Lua. Only the natives the tested modules actually touch are mocked; anything
 -- unused is deliberately absent so an accidental new dependency surfaces as a
 -- nil-call failure rather than passing silently.

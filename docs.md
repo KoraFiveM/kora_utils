@@ -1,4 +1,4 @@
-# kora_smallresources
+# kora_utils
 
 A bundle of small, always-on world and player tweaks built on `kora_lib` — the kind
 of passive behaviour that qb-smallresources / qbx_smallresources ship, but
@@ -56,7 +56,7 @@ comparisons stay integer-vs-integer.
 
 ```
 ensure kora_lib
-ensure kora_smallresources
+ensure kora_utils
 ```
 
 The server-side vehicle/ped blacklist relies on OneSync (`entityCreating`),

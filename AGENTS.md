@@ -1,4 +1,4 @@
-# kora_smallresources agent guide
+# kora_utils agent guide
 
 ## What this resource is
 A collection of small, always-on world/player tweaks — the qb-smallresources /

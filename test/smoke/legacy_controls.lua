@@ -1,7 +1,7 @@
 local scriptDir = debug.getinfo(1, 'S').source:match('@?(.*/)')
 local root = scriptDir .. '../../'
 local frame, events, provided, calls, owner = nil, {}, {}, {}, 'radial'
-function GetCurrentResourceName() return 'kora_smallresources' end
+function GetCurrentResourceName() return 'kora_utils' end
 function GetInvokingResource() return owner end
 function AddEventHandler(name, fn) events[name]=fn end
 function exports(name, fn) provided[name]=fn end

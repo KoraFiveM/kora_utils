@@ -23,7 +23,7 @@ function GetGameTimer() return clock end
 function DisableControlAction(group,id) controls[#controls+1]={group,id} end
 function TriggerServerEvent(name,...) serverEvents[#serverEvents+1]={name=name,args={...}} end
 function TriggerEvent(name,...) localEvents[#localEvents+1]={name=name,args={...}} end
-function GetCurrentResourceName() return 'kora_smallresources' end
+function GetCurrentResourceName() return 'kora_utils' end
 function GetOffsetFromEntityInWorldCoords() return {x=1,y=2,z=3} end
 function SetEntityCoords() ejections=ejections+1 end
 function SetPedToRagdoll() end
@@ -73,7 +73,7 @@ end)
 h.test('progress errors and resource stop clean UI state',function()
  progressCallback=function() error('controlled progress failure') end
  events['seatbelt:client:UseHarness']({slot=3},'error');h.assertFalse(LocalPlayer.state.inv_busy)
- grant(true,2);events.onClientResourceStop('kora_smallresources')
+ grant(true,2);events.onClientResourceStop('kora_utils')
  h.assertFalse(exportsNative.HasHarness());h.assertFalse(LocalPlayer.state.inv_busy);h.assertFalse(LocalPlayer.state.seatbelt)
 end)
 h.report('seatbelt client')
