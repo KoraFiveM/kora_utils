@@ -2,7 +2,7 @@
 -- blacklisted weapon becomes equipped anyway (a menu, a cheat, a buggy give),
 -- it's removed and -- if configured -- the player is notified.
 --
--- qblib already owns the selected-weapon poll. Subscribe to its change edge
+-- kora_lib already owns the selected-weapon poll. Subscribe to its change edge
 -- instead of scheduling another 500ms sweep in this resource.
 --
 -- Vehicle/ped model blacklisting is enforced SERVER-side (server.lua) via

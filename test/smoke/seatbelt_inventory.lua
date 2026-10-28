@@ -1,9 +1,9 @@
-local dir=debug.getinfo(1,'S').source:match('@?(.*/)');local resource=dir..'../../';local inv=resource..'../qbinventory/'
+local dir=debug.getinfo(1,'S').source:match('@?(.*/)');local resource=dir..'../../';local inv=resource..'../kora_inventory/'
 local function copy(v) if type(v)~='table' then return v end local out={} for k,x in pairs(v) do out[k]=copy(x) end return out end
 local player={citizenid='HARNESS',items={[3]={name='harness',amount=1,slot=3,info={uses=5,label='keep'},metadata={uses=99}}}}
 local writes, usable, callback, now = 0,nil,nil,0
-function GetCurrentResourceName() return 'qbsmallresources' end
-function GetInvokingResource() return 'qbsmallresources' end
+function GetCurrentResourceName() return 'kora_smallresources' end
+function GetInvokingResource() return 'kora_smallresources' end
 function GetGameTimer() return now end
 function CreateThread() end
 function AddEventHandler() end
@@ -28,7 +28,7 @@ local core={
  setPath=function(_,src,path,value) assert(src==1 and #path==1 and path[1]=='items');player.items=copy(value);writes=writes+1;return true end,
  createUseable=function(_,_,fn) usable=fn end,
 }
-exports=setmetatable({qbcore=core},{__call=function() end})
+exports=setmetatable({kora_core=core},{__call=function() end})
 dofile(inv..'config.lua');dofile(inv..'shared.lua');Config.qbinventory.cash.asItem=false
 dofile(inv..'server.lua');dofile(inv..'server/compat/qb.lua')
 exports['qb-inventory']={SetItemData=function(_,...) return QbInventory.compat.qb.SetItemData(...) end}

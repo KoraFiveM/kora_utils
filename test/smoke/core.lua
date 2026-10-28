@@ -1,5 +1,5 @@
 -- Smoke tests for the shared tick coordinator (client/core.lua) and the small
--- hashing helpers (client/util.lua). These are the parts of qbsmallresources
+-- hashing helpers (client/util.lua). These are the parts of kora_smallresources
 -- with real logic to verify; the feature modules themselves are thin wrappers
 -- of native calls exercised via the coordinator, covered by config-gating
 -- assertions below.

@@ -1,13 +1,13 @@
 local scriptDir = debug.getinfo(1, 'S').source:match('@?(.*/)')
 local root = scriptDir .. '../../'
 local frame, events, provided, calls, owner = nil, {}, {}, {}, 'radial'
-function GetCurrentResourceName() return 'qbsmallresources' end
+function GetCurrentResourceName() return 'kora_smallresources' end
 function GetInvokingResource() return owner end
 function AddEventHandler(name, fn) events[name]=fn end
 function exports(name, fn) provided[name]=fn end
 function DisableControlAction(group, control, disabled) calls[#calls+1]={group,control,disabled} end
 Small = { onFrame=function(fn) assert(not frame, 'one coordinator registration'); frame=fn end }
-QB = {compat=dofile(root .. '../qblib/compat/provider.lua')()}
+QB = {compat=dofile(root .. '../kora_lib/compat/provider.lua')()}
 dofile(root .. 'client/compat.lua')
 local function legacy(name)
  local fn; events['__cfx_export_qb-smallresources_'..name](function(value) fn=value end); return fn

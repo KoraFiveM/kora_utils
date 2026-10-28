@@ -1,7 +1,7 @@
--- qbsmallresources configuration.
+-- kora_smallresources configuration.
 --
 -- One flat table, one section per feature, a trailing comment on every value --
--- matching qblib's config.lua style. Every feature is independently toggleable;
+-- matching kora_lib's config.lua style. Every feature is independently toggleable;
 -- a feature turned off here registers NOTHING at runtime (no thread, no tick, no
 -- event handler), so trimming this file to taste has a real performance payoff,
 -- not just a cosmetic one. See each module's docs.md for the natives involved.
@@ -137,5 +137,5 @@ Config.seatbelt = {
     crashCooldown = 1000,
 }
 
--- Registers this resource-owned configuration with qblib without changing its public Config table.
+-- Registers this resource-owned configuration with kora_lib without changing its public Config table.
 if QB and QB.config and QB.config.adopt then Config = QB.config.adopt(Config) end

@@ -8,7 +8,7 @@
 -- qbx_entitiesblacklist: OneSync raises `entityCreating` on the server BEFORE
 -- the entity is networked, and CancelEvent() there stops the spawn entirely --
 -- no client-side loop deleting things after the fact, no window where the
--- entity briefly exists. Requires OneSync (assumed on, as with qbcore).
+-- entity briefly exists. Requires OneSync (assumed on, as with kora_core).
 
 -- joaat/GetHashKey both exist server-side; build the lookup once at load so the
 -- hot event handler is a single table read.

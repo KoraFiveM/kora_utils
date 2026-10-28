@@ -1,12 +1,12 @@
-# qbsmallresources agent guide
+# kora_smallresources agent guide
 
 ## What this resource is
 A collection of small, always-on world/player tweaks — the qb-smallresources /
 qbx_smallresources category of behaviour (idle-camera kill, weapon-wheel
 removal, wanted-level suppression, health-regen zeroing, weapon/vehicle
-blacklists), rebuilt on `qblib`. It is a **qblib consumer** (like `qbtarget`),
-not a qblib module: it has its own resource namespace (`Small`), loads
-`@qblib/init.lua` for `QB.*`, and owns its own `config.lua`.
+blacklists), rebuilt on `kora_lib`. It is a **kora_lib consumer** (like `kora_target`),
+not a kora_lib module: it has its own resource namespace (`Small`), loads
+`@kora_lib/init.lua` for `QB.*`, and owns its own `config.lua`.
 
 Scope is deliberately the *passive tweak* half of the originals. Feature-sized
 things the originals also bundle — consumables, carwash, seatbelt physics,
@@ -45,12 +45,12 @@ client/core.lua                 -- the tick coordinator (Small.on*)
 client/util.lua                 -- Small.hash / Small.hashSet
 modules/<feature>/client.lua    -- one folder per feature
 modules/<feature>/server.lua    -- only where a feature needs server authority
-test/{harness,mocks,run.sh}     -- copied/adapted from qblib's suite
+test/{harness,mocks,run.sh}     -- copied/adapted from kora_lib's suite
 test/smoke/<name>.lua           -- one per module with real logic
 ```
 `fxmanifest.lua` lists every file explicitly, never globbed — `core.lua` and
 `util.lua` MUST load before any module that uses them, and an alphabetical glob
-would load `blacklist` first. Same discipline as qblib's own manifest.
+would load `blacklist` first. Same discipline as kora_lib's own manifest.
 
 ## Adding a feature
 1. Add a `Config.<feature>` section with an enable toggle and commented values.
@@ -76,7 +76,7 @@ would load `blacklist` first. Same discipline as qblib's own manifest.
 
 ## Testing
 `test/run.sh` runs every `test/smoke/*.lua` under plain Lua (no busted). Mocks
-(`test/mocks.lua`) follow qblib's convention: `CreateThread` resumes a thread
+(`test/mocks.lua`) follow kora_lib's convention: `CreateThread` resumes a thread
 once, `handle.step()` resumes suspended tick loops one more iteration, and
 `handle.fire(name, ...)` dispatches a lifecycle event. Only the natives the
 tested modules actually call are mocked — a new native dependency should surface

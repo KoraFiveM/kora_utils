@@ -21,9 +21,9 @@ function SetTimeout(_,fn) timeouts[#timeouts+1]=fn end
 function TriggerClientEvent(name,target,...) messages[#messages+1]={name=name,target=target,args={...}} end
 function RegisterNetEvent(name,fn) events[name]=fn end
 function AddEventHandler(name,fn) lifecycle[name]=fn end
-function GetCurrentResourceName() return 'qbsmallresources' end
+function GetCurrentResourceName() return 'kora_smallresources' end
 QB={callback={register=function(name,fn) callbacks[name]=fn end}}
-exports={qbcore={
+exports={kora_core={
  getItemBySlot=function(_,src,slot) return src==1 and item and slot==item.slot and item end,
  createUseable=function(_,name,fn) assert(name=='harness');usable=fn end,
  removeItem=function(_,src,name,count,slot)
@@ -86,7 +86,7 @@ h.test('leave, disconnect and dependency stop invalidate pending and in-flight a
  local token=begin(5);duringWrite=function() fire('qbsmallresources:server:leaveVehicle') end
  h.assertFalse(finish(token));h.assertFalse(lastState())
  token=begin(5);source=1;lifecycle.playerDropped();h.assertFalse(finish(token))
- token=begin(5);lifecycle.onResourceStop('qbinventory');h.assertFalse(finish(token))
+ token=begin(5);lifecycle.onResourceStop('kora_inventory');h.assertFalse(finish(token))
 end)
 h.test('expired actions and removed items cannot be equipped',function()
  local token=begin(5);clock=clock+31000;h.assertFalse(finish(token));h.assertEqual(writes,0)

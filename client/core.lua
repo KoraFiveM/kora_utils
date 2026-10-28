@@ -1,4 +1,4 @@
--- qbsmallresources client core -- the shared tick coordinator every feature
+-- kora_smallresources client core -- the shared tick coordinator every feature
 -- module schedules its work through, instead of each module spawning its own
 -- `while true ... Wait(0)` thread.
 --
@@ -99,7 +99,7 @@ end
 -- `SetPoliceIgnorePlayer`) are reset by the engine when the ped is recreated
 -- on death/respawn, so "set it once at load" silently wears off the first time
 -- the player dies. This funnels those through one place: it fires `fn` once the
--- ped first exists, then again after each `playerSpawned` (qbcore/spawnmanager)
+-- ped first exists, then again after each `playerSpawned` (kora_core/spawnmanager)
 -- and after the ped entity handle changes (the reliable respawn signal even
 -- when no spawn event fires).
 local spawnHandlers = {}
@@ -123,7 +123,7 @@ function Small.onSpawn(fn)
 
     -- The event path (fires on the framework/spawnmanager spawn). playerSpawned
     -- is raised locally by spawnmanager, so AddEventHandler is right for it;
-    -- OnPlayerLoaded only ever arrives over the wire from qbcore, and FiveM
+    -- OnPlayerLoaded only ever arrives over the wire from kora_core, and FiveM
     -- SKIPS a net-delivered event attached with bare AddEventHandler (printing
     -- "event ... was not safe for net"), so it needs RegisterNetEvent.
     AddEventHandler("playerSpawned", fireAll)

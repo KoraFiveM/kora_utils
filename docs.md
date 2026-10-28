@@ -1,6 +1,6 @@
-# qbsmallresources
+# kora_smallresources
 
-A bundle of small, always-on world and player tweaks built on `qblib` — the kind
+A bundle of small, always-on world and player tweaks built on `kora_lib` — the kind
 of passive behaviour that qb-smallresources / qbx_smallresources ship, but
 rebuilt around a single shared tick coordinator so ten features cost one frame
 thread instead of ten.
@@ -51,16 +51,16 @@ comparisons stay integer-vs-integer.
 
 ## Setup
 
-`qblib` must be started first (this resource pulls in `@qblib/init.lua` for
+`kora_lib` must be started first (this resource pulls in `@kora_lib/init.lua` for
 `QB.notify`). In `server.cfg`:
 
 ```
-ensure qblib
-ensure qbsmallresources
+ensure kora_lib
+ensure kora_smallresources
 ```
 
 The server-side vehicle/ped blacklist relies on OneSync (`entityCreating`),
-which is assumed on — the same assumption qbcore makes.
+which is assumed on — the same assumption kora_core makes.
 
 ## Architecture
 

@@ -1,6 +1,6 @@
 -- Small shared helpers used by more than one feature module. Kept tiny and
--- deterministic (qblib's convention) -- anything general enough to live in
--- qblib proper (QB.*) should go there instead; this is only for glue specific
+-- deterministic (kora_lib's convention) -- anything general enough to live in
+-- kora_lib proper (QB.*) should go there instead; this is only for glue specific
 -- to this resource.
 
 Small = Small or {}

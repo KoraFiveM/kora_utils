@@ -1,5 +1,5 @@
 -- GTA grants weapons for entering certain service vehicles (notably police
--- cars). qbinventory owns weapons on this server, so suppress the native grant.
+-- cars). kora_inventory owns weapons on this server, so suppress the native grant.
 
 local cfg = Config.vehicleRewards
 

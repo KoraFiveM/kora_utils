@@ -4,16 +4,18 @@ provide 'qb-smallresources'
 lua54 'yes'
 use_experimental_fxv2_oal 'yes'
 
-name 'qbsmallresources'
+name 'kora_smallresources'
+-- Keep the legacy resource name resolvable for exports['qbsmallresources'] callers.
+provide 'qbsmallresources'
 author 'Jamie'
 version '1.0.0'
 description 'A bundle of small always-on world/player tweaks built on qblib -- idle-camera kill, weapon-wheel removal, wanted-level suppression, zeroed health regen, and weapon/vehicle blacklists, all sharing one tick coordinator.'
 
-dependencies { 'qblib', 'qbcore', 'qbinventory' }
+dependencies { 'kora_lib', 'kora_core', 'kora_inventory' }
 
 -- Pulls in the QB.* proxy (QB.notify is used by modules/blacklist/client.lua).
--- See qblib's AGENTS.md for why a consumer resource loads init.lua this way.
-shared_script '@qblib/init.lua'
+-- See kora_lib's AGENTS.md for why a consumer resource loads init.lua this way.
+shared_script '@kora_lib/init.lua'
 
 -- config.lua is shared so both the client modules and the server-side blacklist
 -- handler read the same Config table.
@@ -21,7 +23,7 @@ shared_scripts {
     'config.lua'
 }
 
--- Explicit load order, never globbed -- same discipline as qblib's own
+-- Explicit load order, never globbed -- same discipline as kora_lib's own
 -- fxmanifest. client/core.lua defines Small.onFrame/onInterval/onSpawn and MUST
 -- load before any module that schedules through them; client/util.lua defines
 -- Small.hashSet, used by modules/blacklist. A `modules/**/client.lua` glob would

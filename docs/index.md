@@ -1,9 +1,9 @@
 ---
 layout: default
-title: qbsmallresources
+title: kora_smallresources
 ---
 
-A bundle of small, always-on world and player tweaks built on `qblib` — the
+A bundle of small, always-on world and player tweaks built on `kora_lib` — the
 kind of passive behaviour that qb-smallresources / qbx_smallresources ship,
 rebuilt around a single shared tick coordinator so ten features cost one
 frame thread instead of ten. It bundles six mini-features:
@@ -22,23 +22,23 @@ cosmetic one.
 
 ## Requirements
 
-- [qblib](https://qbcore2.github.io/qblib/) — this resource loads `@qblib/init.lua` for `QB.cache.ped()` and `QB.notify`
+- [qblib](https://qbcore2.github.io/kora_lib/) — this resource loads `@kora_lib/init.lua` for `QB.cache.ped()` and `QB.notify`
 
 ## Installation
 
 `server.cfg`, in this order:
 ```
-ensure qblib
-ensure qbsmallresources
+ensure kora_lib
+ensure kora_smallresources
 ```
 The server-side vehicle/ped blacklist relies on OneSync (`entityCreating`),
-which is assumed on — the same assumption qbcore makes.
+which is assumed on — the same assumption kora_core makes.
 
 ## Usage examples
 
 This resource ships no exports, commands, or client/server events of its
 own — every mini-feature is switched on and tuned entirely through
-`config.lua`. "Using" qbsmallresources means editing that file. A few
+`config.lua`. "Using" kora_smallresources means editing that file. A few
 concrete slices of it:
 
 ### Kill the idle camera and the weapon wheel
@@ -81,7 +81,7 @@ If a medical/ambulance resource on your server also drives
 ```lua
 -- config.lua
 Config.blacklist = {
-    weapons = { 'WEAPON_RAILGUN', 'WEAPON_RPG', 'WEAPON_MINIGUN' }, -- stripped when qblib reports it selected
+    weapons = { 'WEAPON_RAILGUN', 'WEAPON_RPG', 'WEAPON_MINIGUN' }, -- stripped when kora_lib reports it selected
     serverWeaponSweepInterval = 250,
     notifyOnStrip = true,  -- QB.notify the player when a blacklisted weapon is taken away
 
@@ -127,7 +127,7 @@ Remember to list the new file explicitly in `fxmanifest.lua` after
 
 ## API reference
 
-qbsmallresources has no `exports`, no `RegisterCommand`, and no
+kora_smallresources has no `exports`, no `RegisterCommand`, and no
 `RegisterNetEvent` surface — it's entirely config-driven. What follows is the
 mechanism and native calls behind each feature, and the internal tick
 coordinator that ties them together.
@@ -162,7 +162,7 @@ respawn). Registers nothing when left at stock (`multiplier = 1.0, limit =
 `notifyOnStrip`, `vehicles`, `peds`.
 - Client: subscribes to `QB.cache.onChange('weapon')` and calls
   `RemoveWeaponFromPed` on a match, notifying via `QB.notify.send` when
-  `notifyOnStrip` is true. This reuses qblib's shared weapon cache instead of
+  `notifyOnStrip` is true. This reuses kora_lib's shared weapon cache instead of
   running another client sweep.
 - Server: `entityCreating` + `CancelEvent()` refuses blacklisted
   vehicle/ped models outright (requires OneSync); a second server-side
@@ -205,9 +205,9 @@ integer-vs-integer.
 
 Part of the [qbcore2](https://github.com/qbcore2) resource set:
 
-- [qblib](https://qbcore2.github.io/qblib/) — shared helper library
-- [qbsql](https://qbcore2.github.io/qbsql/) — database driver
-- [qbcore](https://qbcore2.github.io/qbcore/) — framework core
-- [qbinventory](https://qbcore2.github.io/qbinventory/) — headless inventory
-- [qbtarget](https://qbcore2.github.io/qbtarget/) — targeting/interaction
+- [qblib](https://qbcore2.github.io/kora_lib/) — shared helper library
+- [qbsql](https://qbcore2.github.io/kora_sql/) — database driver
+- [qbcore](https://qbcore2.github.io/kora_core/) — framework core
+- [qbinventory](https://qbcore2.github.io/kora_inventory/) — headless inventory
+- [qbtarget](https://qbcore2.github.io/kora_target/) — targeting/interaction
 - [full resource list ↗](https://github.com/orgs/qbcore2/repositories)

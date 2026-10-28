@@ -1,11 +1,11 @@
--- Minimal FiveM native stand-ins for smoke-testing qbsmallresources under plain
+-- Minimal FiveM native stand-ins for smoke-testing kora_smallresources under plain
 -- Lua. Only the natives the tested modules actually touch are mocked; anything
 -- unused is deliberately absent so an accidental new dependency surfaces as a
 -- nil-call failure rather than passing silently.
 local M = {}
 
 ---Installs mocked globals into _G and returns a handle for driving/inspecting
----the simulated runtime. Mirrors qblib/test/mocks.lua's shape (step/fire) so the
+---the simulated runtime. Mirrors kora_lib/test/mocks.lua's shape (step/fire) so the
 ---one-shot-thread convention is the same across both test suites.
 function M.install()
     local threads = {}

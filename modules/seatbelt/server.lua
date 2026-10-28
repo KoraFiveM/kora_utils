@@ -16,7 +16,7 @@ end
 
 local function harnessItem(src, slot)
     if type(slot) ~= 'number' or slot < 1 or slot % 1 ~= 0 then return nil end
-    local item = exports.qbcore:getItemBySlot(src, slot)
+    local item = exports.kora_core:getItemBySlot(src, slot)
     if not item or item.name ~= 'harness' or (item.amount or 0) < 1 then return nil end
     local uses = item.info and item.info.uses
     if uses == nil then uses = Config.HarnessUses end
@@ -37,7 +37,7 @@ end
 
 local function consumeUse(src, item, uses)
     if uses <= 1 then
-        return exports.qbcore:removeItem(src, 'harness', 1, item.slot, 'seatbelt-harness') == true, 0
+        return exports.kora_core:removeItem(src, 'harness', 1, item.slot, 'seatbelt-harness') == true, 0
     end
     local info = {}
     for key, value in pairs(item.info or {}) do info[key] = value end
@@ -120,15 +120,15 @@ RegisterNetEvent('seatbelt:DoHarnessDamage', function()
     publish(src)
 end)
 
-local function registerUsable() exports.qbcore:createUseable('harness', beginUse) end
+local function registerUsable() exports.kora_core:createUseable('harness', beginUse) end
 registerUsable()
 AddEventHandler('playerDropped', function() pending[source], equipped[source], busy[source] = nil, nil, nil end)
 AddEventHandler('QBCore:Server:OnPlayerUnload', function(src) clear(src or source) end)
 AddEventHandler('onResourceStop', function(resource)
-    if resource ~= GetCurrentResourceName() and resource ~= 'qbcore' and resource ~= 'qbinventory' then return end
+    if resource ~= GetCurrentResourceName() and resource ~= 'kora_core' and resource ~= 'kora_inventory' then return end
     for src in pairs(equipped) do clear(src) end
     pending, busy = {}, {}
 end)
 AddEventHandler('onResourceStart', function(resource)
-    if resource == 'qbcore' then registerUsable() end
+    if resource == 'kora_core' then registerUsable() end
 end)

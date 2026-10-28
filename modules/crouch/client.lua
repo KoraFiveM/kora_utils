@@ -97,12 +97,12 @@ local function restoreWalkStyle(ped)
     ResetPedMovementClipset(ped, 0.25)
     ResetPedStrafeClipset(ped)
 
-    -- qbemotemenu owns an optional player walk style. Restore it after we
+    -- kora_emotemenu owns an optional player walk style. Restore it after we
     -- release our temporary movement clipset instead of silently resetting it
     -- to GTA's default walk.
     local savedWalk = LocalPlayer and LocalPlayer.state and LocalPlayer.state['qbemotemenu:walk']
-    if savedWalk and GetResourceState('qbemotemenu') == 'started' then
-        pcall(function() exports.qbemotemenu:setWalk(savedWalk, true) end)
+    if savedWalk and GetResourceState('kora_emotemenu') == 'started' then
+        pcall(function() exports.kora_emotemenu:setWalk(savedWalk, true) end)
     end
 end
 
