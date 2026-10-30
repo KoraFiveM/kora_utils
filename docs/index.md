@@ -22,7 +22,7 @@ cosmetic one.
 
 ## Requirements
 
-- [qblib](https://qbcore2.github.io/kora_lib/) — this resource loads `@kora_lib/init.lua` for `QB.cache.ped()` and `QB.notify`
+- [kora_lib](https://qbcore2.github.io/kora_lib/) — this resource loads `@kora_lib/init.lua` for `QB.cache.ped()` and `QB.notify`
 
 ## Installation
 
@@ -205,7 +205,7 @@ integer-vs-integer.
 
 Part of the [qbcore2](https://github.com/qbcore2) resource set:
 
-- [qblib](https://qbcore2.github.io/kora_lib/) — shared helper library
+- [kora_lib](https://qbcore2.github.io/kora_lib/) — shared helper library
 - [qbsql](https://qbcore2.github.io/kora_sql/) — database driver
 - [qbcore](https://qbcore2.github.io/kora_core/) — framework core
 - [qbinventory](https://qbcore2.github.io/kora_inventory/) — headless inventory

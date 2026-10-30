@@ -9,7 +9,7 @@ name 'kora_utils'
 provide 'qbsmallresources'
 author 'Jamie'
 version '1.0.0'
-description 'A bundle of small always-on world/player tweaks built on qblib -- idle-camera kill, weapon-wheel removal, wanted-level suppression, zeroed health regen, and weapon/vehicle blacklists, all sharing one tick coordinator.'
+description 'A bundle of small always-on world/player tweaks built on kora_lib -- idle-camera kill, weapon-wheel removal, wanted-level suppression, zeroed health regen, and weapon/vehicle blacklists, all sharing one tick coordinator.'
 
 dependencies { 'kora_lib', 'kora_core', 'kora_inventory' }
 

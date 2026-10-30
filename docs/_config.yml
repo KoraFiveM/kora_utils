@@ -1,4 +1,4 @@
 theme: jekyll-theme-cayman
 title: qbsmallresources
-description: "A bundle of small, always-on world/player tweaks built on qblib -- idle-camera kill, weapon-wheel removal, wanted-level suppression, zeroed health regen, and weapon/vehicle blacklists, all sharing one tick coordinator."
+description: "A bundle of small, always-on world/player tweaks built on kora_lib -- idle-camera kill, weapon-wheel removal, wanted-level suppression, zeroed health regen, and weapon/vehicle blacklists, all sharing one tick coordinator."
 show_downloads: false
