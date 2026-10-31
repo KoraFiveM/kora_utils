@@ -35,9 +35,9 @@ local function changed(value)
         velocity = GetEntityVelocity(vehicle)
     end
 end
-QB.cache.onChange('vehicle', changed)
+Kora.cache.onChange('vehicle', changed)
 announce()
-changed(QB.cache.vehicle())
+changed(Kora.cache.vehicle())
 
 local function toggleSeatbelt()
     if not vehicle or IsPauseMenuActive() then return end
@@ -51,7 +51,7 @@ AddEventHandler('qbsmallresources:client:toggleSeatbelt', toggleSeatbelt)
 
 for name, handler in pairs({HasHarness=function() return harness end, HasSeatbeltOn=function() return seatbelt end}) do
     exports(name, handler)
-    QB.compat.provideExport('qb-smallresources', name, handler)
+    Kora.compat.provideExport('qb-smallresources', name, handler)
 end
 
 RegisterNetEvent('qbsmallresources:client:harnessState', function(enabled, uses)
@@ -68,7 +68,7 @@ RegisterNetEvent('seatbelt:client:UseHarness', function(item, token)
     busy = true
     local selected = vehicle
     LocalPlayer.state:set('inv_busy', true, true)
-    local ok, completed = pcall(QB.progressbar.start, {
+    local ok, completed = pcall(Kora.progressbar.start, {
         label = harness and 'Removing Race Harness' or 'Attaching Race Harness',
         duration = Config.seatbelt.equipDuration, canCancel = true, disable = { combat = true },
     })
@@ -78,8 +78,8 @@ RegisterNetEvent('seatbelt:client:UseHarness', function(item, token)
         TriggerServerEvent('qbsmallresources:server:cancelHarness', token)
         return
     end
-    if QB.callback.trigger('qbsmallresources:server:finishHarness', {slot=item.slot}, token) ~= true then
-        QB.notify.send({title='Harness',message='The harness could not be equipped.',type='error'})
+    if Kora.callback.trigger('qbsmallresources:server:finishHarness', {slot=item.slot}, token) ~= true then
+        Kora.notify.send({title='Harness',message='The harness could not be equipped.',type='error'})
     end
 end)
 
@@ -141,7 +141,7 @@ end)
 AddEventHandler('QBCore:Client:OnPlayerUnload', reset)
 AddEventHandler('onClientResourceStop', function(resource)
     if resource ~= GetCurrentResourceName() then return end
-    if busy then QB.progressbar.cancel() end
+    if busy then Kora.progressbar.cancel() end
     LocalPlayer.state:set('inv_busy', false, true)
     reset()
 end)

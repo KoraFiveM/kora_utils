@@ -44,7 +44,7 @@ end
 for name, handler in pairs({ addDisableControls = addDisableControls,
     removeDisableControls = removeDisableControls, getDisableControls = getDisableControls }) do
     exports(name, handler)
-    QB.compat.provideExport('qb-smallresources', name, handler)
+    Kora.compat.provideExport('qb-smallresources', name, handler)
 end
 
 AddEventHandler('onClientResourceStop', function(resource)

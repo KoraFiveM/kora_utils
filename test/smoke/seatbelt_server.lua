@@ -22,7 +22,7 @@ function TriggerClientEvent(name,target,...) messages[#messages+1]={name=name,ta
 function RegisterNetEvent(name,fn) events[name]=fn end
 function AddEventHandler(name,fn) lifecycle[name]=fn end
 function GetCurrentResourceName() return 'kora_utils' end
-QB={callback={register=function(name,fn) callbacks[name]=fn end}}
+Kora={callback={register=function(name,fn) callbacks[name]=fn end}}
 exports={kora_core={
  getItemBySlot=function(_,src,slot) return src==1 and item and slot==item.slot and item end,
  createUseable=function(_,name,fn) assert(name=='harness');usable=fn end,

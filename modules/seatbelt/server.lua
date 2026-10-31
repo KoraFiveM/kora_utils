@@ -88,7 +88,7 @@ local function finish(src, supplied, token)
     return true
 end
 
-QB.callback.register('qbsmallresources:server:finishHarness', finish, {rateLimit={max=4,window=10000}})
+Kora.callback.register('qbsmallresources:server:finishHarness', finish, {rateLimit={max=4,window=10000}})
 RegisterNetEvent('equip:harness', function(item) finish(source, item) end)
 RegisterNetEvent('qbsmallresources:server:cancelHarness', function(token)
     local action = pending[source]

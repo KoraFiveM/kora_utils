@@ -1,7 +1,7 @@
 local root = (debug.getinfo(1, 'S').source:match('@?(.*/)') or './') .. '../../'
 local tasks, calls = {}, {}
 local ped = 42
-QB = { cache = { ped = function() return ped end } }
+Kora = { cache = { ped = function() return ped end } }
 Small = { onInterval = function(interval, fn)
     assert(interval == 2000)
     tasks[#tasks + 1] = fn

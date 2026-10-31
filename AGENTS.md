@@ -6,7 +6,7 @@ qbx_smallresources category of behaviour (idle-camera kill, weapon-wheel
 removal, wanted-level suppression, health-regen zeroing, weapon/vehicle
 blacklists), rebuilt on `kora_lib`. It is a **kora_lib consumer** (like `kora_target`),
 not a kora_lib module: it has its own resource namespace (`Small`), loads
-`@kora_lib/init.lua` for `QB.*`, and owns its own `config.lua`.
+`@kora_lib/init.lua` for `Kora.*`, and owns its own `config.lua`.
 
 Scope is deliberately the *passive tweak* half of the originals. Feature-sized
 things the originals also bundle — consumables, carwash, seatbelt physics,

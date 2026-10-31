@@ -22,7 +22,7 @@ cosmetic one.
 
 ## Requirements
 
-- [kora_lib](https://qbcore2.github.io/kora_lib/) — this resource loads `@kora_lib/init.lua` for `QB.cache.ped()` and `QB.notify`
+- [kora_lib](https://qbcore2.github.io/kora_lib/) — this resource loads `@kora_lib/init.lua` for `Kora.cache.ped()` and `Kora.notify`
 
 ## Installation
 
@@ -83,7 +83,7 @@ If a medical/ambulance resource on your server also drives
 Config.blacklist = {
     weapons = { 'WEAPON_RAILGUN', 'WEAPON_RPG', 'WEAPON_MINIGUN' }, -- stripped when kora_lib reports it selected
     serverWeaponSweepInterval = 250,
-    notifyOnStrip = true,  -- QB.notify the player when a blacklisted weapon is taken away
+    notifyOnStrip = true,  -- Kora.notify the player when a blacklisted weapon is taken away
 
     vehicles = { 'rhino', 'lazer', 'hydra', 'oppressor2' },  -- refused server-side via entityCreating
     peds = {},
@@ -160,8 +160,8 @@ respawn). Registers nothing when left at stock (`multiplier = 1.0, limit =
 ### `blacklist` (client + server)
 `Config.blacklist` — `weapons`, `serverWeaponSweepInterval`,
 `notifyOnStrip`, `vehicles`, `peds`.
-- Client: subscribes to `QB.cache.onChange('weapon')` and calls
-  `RemoveWeaponFromPed` on a match, notifying via `QB.notify.send` when
+- Client: subscribes to `Kora.cache.onChange('weapon')` and calls
+  `RemoveWeaponFromPed` on a match, notifying via `Kora.notify.send` when
   `notifyOnStrip` is true. This reuses kora_lib's shared weapon cache instead of
   running another client sweep.
 - Server: `entityCreating` + `CancelEvent()` refuses blacklisted

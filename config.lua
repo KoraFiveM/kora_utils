@@ -96,7 +96,7 @@ Config.blacklist = {
         'WEAPON_STINGER',
     },
     serverWeaponSweepInterval = 250,
-    notifyOnStrip = true,       -- QB.notify the player when a blacklisted weapon is taken away
+    notifyOnStrip = true,       -- Kora.notify the player when a blacklisted weapon is taken away
 
     -- Vehicle models a player may not spawn. Enforced SERVER-side (via OneSync's
     -- entityCreating) so a client can't just skip the check. Names or hashes.
@@ -138,4 +138,4 @@ Config.seatbelt = {
 }
 
 -- Registers this resource-owned configuration with kora_lib without changing its public Config table.
-if QB and QB.config and QB.config.adopt then Config = QB.config.adopt(Config) end
+if Kora and Kora.config and Kora.config.adopt then Config = Kora.config.adopt(Config) end

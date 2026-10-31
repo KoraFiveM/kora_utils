@@ -32,7 +32,7 @@ function GetEntityHealth() return health end
 function SetEntityHealth(_,value) health=value end
 function SetVehicleEngineOn() end
 LocalPlayer={state=setmetatable({}, {__index={set=function(self,key,value) self[key]=value;busyWrites[#busyWrites+1]={key,value} end}})}
-QB={compat=dofile(root..'../kora_lib/compat/provider.lua')(),
+Kora={compat=dofile(root..'../kora_lib/compat/provider.lua')(),
  cache={onChange=function(_,fn) change=fn end,vehicle=function() return vehicle end},
  progressbar={start=function() if progressCallback then progressCallback() end;return completed end,cancel=function() end},
  callback={trigger=function() return accepted end},notify={send=function() end}}

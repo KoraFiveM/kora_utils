@@ -131,7 +131,7 @@ stand = function(ped)
 end
 
 local function loadClipset(name)
-    local loaded = QB.stream.loadClipSet(name)
+    local loaded = Kora.stream.loadClipSet(name)
     if loaded ~= false then loadedClipsets[name] = true end
     return loaded ~= false
 end
@@ -154,7 +154,7 @@ end
 
 local function prone(ped)
     if not canChangeStance(ped) then return false end
-    local dict = QB.stream.loadAnimDict(config.proneAnimDict)
+    local dict = Kora.stream.loadAnimDict(config.proneAnimDict)
     if dict == false then return false end
     proneAnimationLoaded = true
 
@@ -201,7 +201,7 @@ local function toggleCrouch()
     end
 end
 
-QB.keybind.add({
+Kora.keybind.add({
     name = 'qbsmallresources_crouch',
     description = 'Toggle crouch / hold prone',
     defaultKey = config.keybind,

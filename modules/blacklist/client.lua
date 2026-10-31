@@ -17,11 +17,11 @@ if not next(blacklistedWeapons) then return end
 local function enforceWeaponBlacklist(weapon)
     if not blacklistedWeapons[weapon] then return end
 
-    local ped = QB.cache.ped()
+    local ped = Kora.cache.ped()
     RemoveWeaponFromPed(ped, weapon)
 
     if Config.blacklist.notifyOnStrip then
-        QB.notify.send({
+        Kora.notify.send({
             title = "Weapon removed",
             message = "That weapon isn't allowed on this server.",
             type = "error",
@@ -29,5 +29,5 @@ local function enforceWeaponBlacklist(weapon)
     end
 end
 
-QB.cache.onChange('weapon', enforceWeaponBlacklist)
-enforceWeaponBlacklist(QB.cache.weapon())
+Kora.cache.onChange('weapon', enforceWeaponBlacklist)
+enforceWeaponBlacklist(Kora.cache.weapon())

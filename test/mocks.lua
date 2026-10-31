@@ -135,25 +135,25 @@ function M.install()
     -- GetPlayerWantedLevel needs a real return; default 0 (no level).
     _G.GetPlayerWantedLevel = function() return _G.__wantedLevel or 0 end
 
-    -- Minimal QB.notify used by blacklist client.
-    _G.QB = _G.QB or {}
-    _G.QB.cache = _G.QB.cache or {}
-    function _G.QB.cache.ped() return _G.__ped end
-    function _G.QB.cache.playerId() return 0 end
-    function _G.QB.cache.weapon() return _G.__selectedWeapon end
-    function _G.QB.cache.onChange(key, handler)
+    -- Minimal Kora.notify used by blacklist client.
+    _G.Kora = _G.Kora or {}
+    _G.Kora.cache = _G.Kora.cache or {}
+    function _G.Kora.cache.ped() return _G.__ped end
+    function _G.Kora.cache.playerId() return 0 end
+    function _G.Kora.cache.weapon() return _G.__selectedWeapon end
+    function _G.Kora.cache.onChange(key, handler)
         cacheChangeHandlers[key] = cacheChangeHandlers[key] or {}
         table.insert(cacheChangeHandlers[key], handler)
     end
-    _G.QB.notify = _G.QB.notify or {}
+    _G.Kora.notify = _G.Kora.notify or {}
     _G.__notifications = {}
-    function _G.QB.notify.send(payload) table.insert(_G.__notifications, payload) end
-    _G.QB.stream = _G.QB.stream or {}
-    function _G.QB.stream.loadClipSet(name) return name end
-    function _G.QB.stream.loadAnimDict(name) return name end
+    function _G.Kora.notify.send(payload) table.insert(_G.__notifications, payload) end
+    _G.Kora.stream = _G.Kora.stream or {}
+    function _G.Kora.stream.loadClipSet(name) return name end
+    function _G.Kora.stream.loadAnimDict(name) return name end
     _G.__keybinds = {}
-    _G.QB.keybind = _G.QB.keybind or {}
-    function _G.QB.keybind.add(options)
+    _G.Kora.keybind = _G.Kora.keybind or {}
+    function _G.Kora.keybind.add(options)
         _G.__keybinds[options.name] = options
         return { remove = function() return true end }
     end

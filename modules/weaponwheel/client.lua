@@ -7,7 +7,7 @@ if Config.weaponWheel.blockAutoSwap then
 end
 
 local function disableWeaponWheel()
-    SetPedConfigFlag(QB.cache.ped(), 48, true) -- Disable weapon wheel
+    SetPedConfigFlag(Kora.cache.ped(), 48, true) -- Disable weapon wheel
 end
 
 disableWeaponWheel()

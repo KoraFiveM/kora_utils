@@ -83,7 +83,7 @@ harness.test("dispatch and autoswap options emit their documented native calls",
         { disable = true, option = true },
         { disable = true },
     }) do
-        Small, QB = nil, nil
+        Small, Kora = nil, nil
         local runtime = mocks.install()
         dofile(repoRoot .. "client/core.lua")
         Config = {

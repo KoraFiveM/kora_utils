@@ -52,7 +52,7 @@ comparisons stay integer-vs-integer.
 ## Setup
 
 `kora_lib` must be started first (this resource pulls in `@kora_lib/init.lua` for
-`QB.notify`). In `server.cfg`:
+`Kora.notify`). In `server.cfg`:
 
 ```
 ensure kora_lib

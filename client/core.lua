@@ -136,7 +136,7 @@ function Small.onSpawn(fn)
     Small.once(function()
         local lastPed = 0
         while true do
-            local ped = QB.cache.ped()
+            local ped = Kora.cache.ped()
             if ped ~= lastPed and ped ~= 0 and DoesEntityExist(ped) then
                 lastPed = ped
                 fireAll()

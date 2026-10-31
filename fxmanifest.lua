@@ -13,7 +13,7 @@ description 'A bundle of small always-on world/player tweaks built on kora_lib -
 
 dependencies { 'kora_lib', 'kora_core', 'kora_inventory' }
 
--- Pulls in the QB.* proxy (QB.notify is used by modules/blacklist/client.lua).
+-- Pulls in the Kora.* proxy (Kora.notify is used by modules/blacklist/client.lua).
 -- See kora_lib's AGENTS.md for why a consumer resource loads init.lua this way.
 shared_script '@kora_lib/init.lua'
 

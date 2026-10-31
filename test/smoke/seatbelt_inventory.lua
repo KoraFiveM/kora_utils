@@ -19,7 +19,7 @@ function GetPlayerRoutingBucket() return 0 end
 function GetEntityRoutingBucket() return 0 end
 function GetVehicleType() return 'automobile' end
 function GetVehicleBodyHealth() return 1000 end
-QB={resources={serverRegistry=function() return {track=function() end,untrack=function() end} end},
+Kora={resources={serverRegistry=function() return {track=function() end,untrack=function() end} end},
  callback={register=function(name,fn) if name=='qbsmallresources:server:finishHarness' then callback=fn end end}}
 local core={
  getShared=function(_,_,name) return name=='harness' and {name='harness',weight=1000,unique=true,useable=true,type='item'} or nil end,
