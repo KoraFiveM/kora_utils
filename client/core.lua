@@ -1,28 +1,14 @@
--- kora_utils client core -- the shared tick coordinator every feature
--- module schedules its work through, instead of each module spawning its own
--- `while true ... Wait(0)` thread.
+-- kora_utils client core -- the shared tick coordinator every feature module
+-- schedules through instead of spawning its own `while true ... Wait(0)` thread.
+-- At MOST one frame thread plus one thread per distinct interval; a feature
+-- disabled in config registers nothing and costs zero.
 --
--- Why this exists: a "small resources" bundle is a pile of tiny always-on
--- tweaks (invalidate the idle cam, block the weapon wheel, clear the wanted
--- level, zero the health regen, strip blacklisted weapons...). The naive shape
--- -- one CreateThread per feature -- means a server running ten of them pays
--- ten separate coroutine resumes every single frame, most doing one cheap
--- native call. That is exactly the "running hot" pattern we optimised out of
--- baseevents. Here every enabled feature registers a callback and we run AT
--- MOST one frame thread for the whole resource, plus one thread per distinct
--- slow interval. A feature disabled in config registers nothing and costs
--- literally zero -- no thread, no branch in a hot loop.
---
--- Realm: client only. Server-side features (spawn blacklists etc.) use plain
--- event handlers and don't need a tick.
+-- Realm: client only.
 
 Small = Small or {}
 
--- Every-frame (Wait 0) callbacks. One shared thread drains this list. The
--- thread is created lazily on the first onFrame registration and never torn
--- down -- once something wants per-frame work, the frame thread is warranted
--- for the resource's lifetime. If NOTHING ever calls onFrame, the thread never
--- exists.
+-- Every-frame callbacks drained by one shared thread, created lazily on the
+-- first onFrame registration and never torn down.
 local frameTasks = {}
 local frameThreadStarted = false
 
@@ -94,14 +80,10 @@ function Small.once(fn)
     CreateThread(fn)
 end
 
--- Re-run `fn` on first spawn and on every respawn. A lot of player-scoped
+-- Re-run `fn` on first spawn and every respawn: the engine resets player-scoped
 -- natives (`SetPlayerHealthRechargeMultiplier`, `SetMaxWantedLevel`,
--- `SetPoliceIgnorePlayer`) are reset by the engine when the ped is recreated
--- on death/respawn, so "set it once at load" silently wears off the first time
--- the player dies. This funnels those through one place: it fires `fn` once the
--- ped first exists, then again after each `playerSpawned` (kora_core/spawnmanager)
--- and after the ped entity handle changes (the reliable respawn signal even
--- when no spawn event fires).
+-- `SetPoliceIgnorePlayer`) when the ped is recreated. Also fires on a ped-handle
+-- change, the reliable respawn signal when no spawn event is raised.
 local spawnHandlers = {}
 local spawnWatcherStarted = false
 

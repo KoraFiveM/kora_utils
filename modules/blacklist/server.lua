@@ -1,17 +1,10 @@
 -- blacklist (server) -- authoritative block on spawning blacklisted vehicle and
--- ped models. This is the server half of the "ignore blacklisted things"
--- feature: the client can strip a weapon it's holding, but only the server can
--- reliably refuse to let a networked entity come into existence in the first
--- place.
+-- ped models. Only the server can reliably refuse a networked entity.
 --
--- Mechanism matches qb-smallresources' server/entities.lua and
--- qbx_entitiesblacklist: OneSync raises `entityCreating` on the server BEFORE
--- the entity is networked, and CancelEvent() there stops the spawn entirely --
--- no client-side loop deleting things after the fact, no window where the
--- entity briefly exists. Requires OneSync (assumed on, as with kora_core).
+-- OneSync raises `entityCreating` BEFORE the entity is networked, and
+-- CancelEvent() there stops the spawn entirely. Requires OneSync.
 
--- joaat/GetHashKey both exist server-side; build the lookup once at load so the
--- hot event handler is a single table read.
+-- Build the lookup once at load so the hot handler is a single table read.
 local function toHash(value)
     if type(value) == "number" then return value end
     return joaat(value)

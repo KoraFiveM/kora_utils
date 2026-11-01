@@ -1,23 +1,12 @@
--- healthregen -- control GTA's passive health regeneration. By default the
--- engine slowly heals the player back toward full; zeroing the multiplier makes
--- damage stick until an item or a medic script heals it, which is what most RP
--- servers want.
+-- healthregen -- zero GTA's passive health regeneration so damage sticks until
+-- an item or medic heals it.
 --
--- NOTE: unlike the other modules here, this is NOT inherited from either
--- qb-smallresources or qbx_smallresources -- in both, health-regen tuning lives
--- in the ambulance/medical resource, not smallresources. It's included here
--- because it's an explicit requested feature and it's a natural fit for a
--- "passive player tweaks" bundle. If a medical resource on your server also
--- manages recharge, pick ONE owner to avoid the two fighting each other.
+-- NOTE: not inherited from qb-/qbx_smallresources (there it lives in the medical
+-- resource). If a medical resource also manages recharge, pick ONE owner.
 --
--- Mechanism: SetPlayerHealthRechargeMultiplier / SetPlayerHealthRechargeLimit
--- are player-scoped and reset when the ped is recreated on respawn, so they're
--- reapplied on every spawn via Small.onSpawn rather than set once at load
--- (set-once silently wears off the first time the player dies).
+-- The natives are player-scoped and reset on respawn, hence Small.onSpawn.
 
--- Nothing to do if the config leaves regen at stock (multiplier 1.0 with no
--- limit change) -- avoid registering a spawn handler that would only ever
--- reassert engine defaults.
+-- Stock regen (multiplier 1.0, no limit change): register nothing.
 if Config.healthRegen.multiplier == 1.0 and Config.healthRegen.limit == 0.0 then
     return
 end

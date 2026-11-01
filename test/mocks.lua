@@ -12,7 +12,7 @@ function M.install()
     local eventHandlers = {}
     local cacheChangeHandlers = {}
 
-    -- --- Scheduling ---------------------------------------------------------
+    -- Scheduling
     -- CreateThread resumes the body once (like FiveM): a one-shot thread runs to
     -- completion, a `while true ... Wait() end` thread runs one iteration then
     -- sits suspended. step() resumes every still-suspended thread once more, so
@@ -41,7 +41,7 @@ function M.install()
         for _, fn in ipairs(eventHandlers[name] or {}) do fn(...) end
     end
 
-    -- --- Hashing ------------------------------------------------------------
+    -- Hashing
     -- Deterministic 32-bit FNV-1a so name->hash is stable within a test run.
     -- Real joaat differs, but the modules only ever compare hash-to-hash, so any
     -- consistent function is a faithful stand-in.
@@ -55,7 +55,7 @@ function M.install()
     end
     _G.GetHashKey = _G.joaat
 
-    -- --- Misc natives used by modules under test ---------------------------
+    -- Misc natives used by modules under test
     _G.__cancelled = false
     function _G.CancelEvent() _G.__cancelled = true end
 
