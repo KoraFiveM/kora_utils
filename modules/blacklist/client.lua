@@ -17,8 +17,7 @@ if not next(blacklistedWeapons) then return end
 local function enforceWeaponBlacklist(weapon)
     if not blacklistedWeapons[weapon] then return end
 
-    local ped = Kora.cache.ped()
-    RemoveWeaponFromPed(ped, weapon)
+    RemoveWeaponFromPed(Kora.cache.ped(), weapon)
 
     if Config.blacklist.notifyOnStrip then
         Kora.notify.send({

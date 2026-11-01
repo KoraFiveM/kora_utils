@@ -26,9 +26,6 @@ function Small.onFrame(fn)
     frameThreadStarted = true
 
     CreateThread(function()
-        -- Cache the length only inside the frame; onFrame can still append
-        -- (features register at load, before the first frame runs, but a late
-        -- registration must not be skipped forever either), so re-read #.
         while true do
             for i = 1, #frameTasks do
                 frameTasks[i]()

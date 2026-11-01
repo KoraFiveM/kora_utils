@@ -31,9 +31,7 @@ local function changed(value)
     if current == vehicle then return end
     reset()
     vehicle = current
-    if vehicle then
-        velocity = GetEntityVelocity(vehicle)
-    end
+    if vehicle then velocity = GetEntityVelocity(vehicle) end
 end
 Kora.cache.onChange('vehicle', changed)
 announce()
@@ -136,7 +134,6 @@ Small.onFrame(function()
         if speed < peakSpeed then peakTicks = 25 end
     end
     previousBody, velocity = body, GetEntityVelocity(vehicle)
-
 end)
 AddEventHandler('QBCore:Client:OnPlayerUnload', reset)
 AddEventHandler('onClientResourceStop', function(resource)
