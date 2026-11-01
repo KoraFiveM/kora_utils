@@ -1,19 +1,9 @@
--- worlddepop -- thin out GTA's ambient chaos so the city feels like an RP
--- server rather than singleplayer: no random NPC police, no distant cop
--- sirens, no garbage trucks, dead NPCs don't litter the ground with weapons,
--- and (optionally) ambient peds stop treating players as enemies on sight.
+-- worlddepop -- thin out GTA's ambient chaos: no random cops, sirens or garbage
+-- trucks, no weapon drops, optionally calmed ambient peds.
 --
--- Two kinds of native here, handled differently:
---   * One-shot ambient kills (SetCreateRandomCops, SetGarbageTrucks, the
---     relationship calming) -- applied once on spawn. A few of these are reset
---     by the engine over time, so they're ALSO reasserted on a slow interval.
---   * "Peds don't drop weapons" -- a slow sweep of the ped pool setting the
---     flag. The originals hook populationPedCreating, but that event fires
---     BEFORE the ped exists and exposes only model/position/heading setters
---     (no drops-weapon setter), so they end up GetClosestPed-guessing anyway.
---     A periodic GetGamePool('CPed') sweep is simpler and actually reliable;
---     SetPedDropsWeaponsWhenDead is idempotent, so re-flagging a ped is a
---     no-op, and the sweep runs off the frame thread on the slow interval.
+-- One-shot ambient natives run on spawn and, since the engine resets some, again
+-- on a slow interval. Weapon drops use a GetGamePool('CPed') sweep because
+-- populationPedCreating fires before the ped exists and has no drops-weapon setter.
 
 local cfg = Config.worldDepop
 
@@ -51,17 +41,13 @@ end
 
 Small.onSpawn(applyAmbient)
 
--- Reassert the subset the engine resets. Guarded so a fully-default config
--- (everything off) registers no interval at all.
+-- Reassert the subset the engine resets; nothing registered when all are off.
 if cfg.disableRandomCops or cfg.calmNpcs or cfg.disableDriveby then
     Small.onInterval(cfg.reassertInterval, applyAmbient)
 end
 
--- Peds don't drop their weapon when killed -- closes off a common route to
--- players picking up blacklisted guns off the street. Swept on the same slow
--- reassert interval: SetPedDropsWeaponsWhenDead is idempotent, so re-flagging an
--- already-flagged ped costs nothing and newly-streamed peds get caught within
--- one interval.
+-- Peds don't drop weapons when killed, closing off a route to picking up
+-- blacklisted guns. SetPedDropsWeaponsWhenDead is idempotent, so re-flagging is free.
 if cfg.disablePedDrops then
     Small.onInterval(cfg.reassertInterval, function()
         for _, ped in ipairs(GetGamePool("CPed")) do
