@@ -3,8 +3,7 @@
 local jobs, nextId, running = {}, 0, false
 
 local function clock()
-    local now = os.time()
-    local parts = os.date('*t', now)
+    local parts = os.date('*t')
     return { day = parts.wday, hour = parts.hour, min = parts.min }
 end
 
