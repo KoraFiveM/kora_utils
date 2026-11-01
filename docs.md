@@ -22,6 +22,21 @@ trimming the config has a real performance payoff, not just a cosmetic one.
 | `blacklist` | client + server | Strips disallowed weapons client-side; refuses disallowed vehicle/ped spawns server-side | `GetSelectedPedWeapon`/`RemoveWeaponFromPed`, `entityCreating`+`CancelEvent` |
 | `worlddepop` | client | Thins ambient chaos: no random cops, calmer NPCs, dead peds don't drop weapons | `SetCreateRandomCops`, `SetRelationshipBetweenGroups`, `SetPedDropsWeaponsWhenDead` |
 
+### QBCore compatibility exports
+
+Provided under `qb-smallresources` (and `qbsmallresources`), so stock callers run unmodified:
+
+- Client: `addDisableControls`, `removeDisableControls`, `getDisableControls`, and `addDisableHudComponents`,
+  `removeDisableHudComponents`, `getDisableHudComponents`, `setDisplayAmmo`, `getDisplayAmmo`, `DecorSet`
+  (density types `parked`, `vehicle`, `multiplier`, `peds`, `scenario`, values 0-1), `getHandsup`.
+  They share the one frame coordinator and schedule nothing until a caller uses them. Unlike stock there
+  is no default hidden-component list and no default density, so an untouched server changes nothing.
+  `getHandsup` reports whether the ped is playing the hands-up animation (stock tracked its own `/hu` command).
+- Server: `CreateTimedJob(hour, min, cb)`, `ForceRunTimedJob(id)`, `StopTimedJob(id)`. One loop, started on the
+  first job and aligned to the minute; ids are never reused, callback errors are caught, and a stopped
+  resource's jobs are dropped. There is no network event, only server resources can use them.
+- `AddFood`, `AddDrink`, `AddAlcohol` and `AddCustom` live in `kora_consumables`.
+
 ### Note on `healthregen`
 This module is a value-add, **not** inherited from either original — in both
 qb-smallresources and qbx_smallresources, health-regen tuning lives in the

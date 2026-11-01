@@ -33,6 +33,7 @@ client_scripts {
     'client/core.lua',
     'client/util.lua',
     'client/compat.lua',
+    'client/hud.lua',
     'modules/seatbelt/client.lua',
 
     'modules/idlecamera/client.lua',
@@ -49,5 +50,6 @@ client_scripts {
 -- via OneSync's entityCreating). config.lua above already loaded it Config.
 server_scripts {
     'modules/blacklist/server.lua',
+    'server/timedjobs.lua',
     'modules/seatbelt/server.lua'
 }
