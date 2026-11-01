@@ -103,8 +103,8 @@ harness.test("dispatch and autoswap options emit their documented native calls",
         local wait = Wait
         Wait = function(ms) waits[#waits + 1] = ms; return wait(ms) end
         -- Each client chunk has its own yielding FiveM host execution.
-        CreateThread(function() dofile(repoRoot .. "modules/wantedlevel/client.lua") end)
         CreateThread(function() dofile(repoRoot .. "modules/weaponwheel/client.lua") end)
+        CreateThread(function() dofile(repoRoot .. "modules/wantedlevel/client.lua") end)
         local requested = case.disable and case.option
         harness.assertEqual(#dispatch, requested and 15 or 0,
             "dispatch option must emit one disable for each documented service")
@@ -113,8 +113,8 @@ harness.test("dispatch and autoswap options emit their documented native calls",
         harness.assertEqual(#flags, case.disable and 2 or 0, "existing initial ped flags remain")
         if case.disable then
             harness.assertEqual(flags[1][1], 10)
-            harness.assertEqual(flags[1][2], 42)
-            harness.assertEqual(flags[2][2], 48)
+            harness.assertEqual(flags[1][2], 48)
+            harness.assertEqual(flags[2][2], 42)
         else
             harness.assertEqual(#waits, 0, "disabled modules register no scheduling work")
         end
