@@ -62,6 +62,7 @@ Config.wantedLevel = {
     disable = true,          -- wanted level forced to 0 and capped at 0
     disableDispatch = true,  -- switch off NPC dispatch (cops, ambulance, fire, ...)
     interval = 2000,         -- ms between belt-and-braces clears of any level that slipped through
+    hideHudStar = true,      -- hide the HUD wanted-star component every frame
 }
 ```
 
@@ -144,10 +145,10 @@ via `Small.onFrame`); `SetWeaponsNoAutoswap(true)` (per-spawn, via
 `Small.onSpawn`, when `blockAutoSwap` is set).
 
 ### `wantedlevel` (client)
-`Config.wantedLevel` — `disable`, `disableDispatch`, `interval`. Natives:
-`SetMaxWantedLevel(0)` and `SetPoliceIgnorePlayer(PlayerId(), true)` on spawn;
-`SetMaxWantedLevel(0)`, `SetPlayerWantedLevel`/`SetPlayerWantedLevelNow`
-belt-and-braces clear, and `EnableDispatchService(1..15, false)` (when
+`Config.wantedLevel` — `disable`, `disableDispatch`, `interval`, `hideHudStar`. Natives:
+`SetMaxWantedLevel(0)` on spawn; `HideHudComponentThisFrame(1)` every frame (when `hideHudStar`);
+`SetMaxWantedLevel(0)`, `SetPlayerWantedLevel`/`SetPlayerWantedLevelNow`/`ClearPlayerWantedLevel`
+clear (only when the level is above 0), and `EnableDispatchService(1..15, false)` (when
 `disableDispatch`) on `Config.wantedLevel.interval`.
 
 ### `healthregen` (client)

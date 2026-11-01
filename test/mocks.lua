@@ -121,7 +121,7 @@ function M.install()
     -- only where a test asserts on it.
     for _, name in ipairs({
         "SetMaxWantedLevel", "SetPoliceIgnorePlayer", "GetPlayerWantedLevel",
-        "SetPlayerWantedLevel", "SetPlayerWantedLevelNow", "EnableDispatchService",
+        "SetPlayerWantedLevel", "SetPlayerWantedLevelNow", "ClearPlayerWantedLevel", "HideHudComponentThisFrame", "EnableDispatchService",
         "InvalidateIdleCam", "InvalidateVehicleIdleCam", "BlockWeaponWheelThisFrame",
         "DisableControlAction", "SetWeaponsNoAutoswap",
         "SetPlayerHealthRechargeMultiplier", "SetPlayerHealthRechargeLimit",

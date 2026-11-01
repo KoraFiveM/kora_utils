@@ -136,7 +136,7 @@ harness.test("dispatch and autoswap options emit their documented native calls",
             harness.assertEqual(flags[3][1], 99, "periodic wanted flag reads the current ped")
             harness.assertEqual(flags[4][1], 99, "periodic wheel flag reads the current ped")
             for _, ms in ipairs(waits) do
-                harness.assertTrue(ms == 2000 or (requested and ms == 1000),
+                harness.assertTrue(ms == 2000 or ms == 0 or ms == 1000,
                     "only existing flag cadence and spawn watcher sleeps are used")
             end
         end

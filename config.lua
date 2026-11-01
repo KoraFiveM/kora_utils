@@ -45,7 +45,8 @@ Config.vehicleRewards = {
 Config.wantedLevel = {
     disable = true,          -- true = wanted level is forced to 0 and capped at 0
     disableDispatch = true,  -- true = NPC dispatch services (cops, ambulance, fire, ...) are switched off
-    interval = 2000,         -- ms between clears of any level that slipped through (SetMaxWantedLevel(0) alone covers most, this is the belt-and-braces sweep)
+    interval = 2000,         -- ms between re-applying the cap and clearing any level that slipped through (SetMaxWantedLevel(0) alone covers most, this is the belt-and-braces sweep)
+    hideHudStar = true,      -- true = also hide the HUD wanted-star component every frame (only runs while disable = true)
 }
 
 -- ===========================================================================
