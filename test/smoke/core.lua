@@ -140,6 +140,7 @@ harness.test("dispatch and autoswap options emit their documented native calls",
         runtime.fire("QBCore:Client:OnPlayerLoaded")
         harness.assertEqual(#autoswap, requested and 3 or 0, "autoswap reasserts through existing lifecycle events")
         _G.__ped = 99
+        runtime.cacheChange("ped", 99)
         runtime.step()
         harness.assertEqual(#dispatch, requested and 30 or 0, "dispatch reuses the existing periodic work")
         harness.assertEqual(#autoswap, requested and 4 or 0, "autoswap follows the existing ped replacement watcher")
@@ -159,6 +160,29 @@ harness.test("dispatch and autoswap options emit their documented native calls",
             end
         end
     end
+end)
+
+harness.test("onSpawn follows cache ped changes and re-registers on a kora_lib restart", function()
+    Small, Kora = nil, nil
+    local runtime = mocks.install()
+    dofile(repoRoot .. "client/core.lua")
+    _G.__ped = 10
+    local spawns = 0
+    Small.onSpawn(function() spawns = spawns + 1 end)
+    harness.assertEqual(spawns, 1, "seeding from the current ped fires once at registration")
+    runtime.cacheChange("ped", 10, 10)
+    harness.assertEqual(spawns, 1, "an unchanged ped handle does not refire")
+    runtime.cacheChange("ped", 0, 10)
+    harness.assertEqual(spawns, 1, "a zero ped handle is ignored")
+    runtime.cacheChange("ped", 55, 10)
+    harness.assertEqual(spawns, 2, "a new ped handle fires the spawn handlers")
+    runtime.step()
+    harness.assertEqual(spawns, 2, "no polling thread refires without a change")
+    _G.__ped = 55
+    runtime.fire("onClientResourceStart", "kora_lib")
+    harness.assertEqual(spawns, 2, "re-registering after a kora_lib restart re-seeds without refiring the same ped")
+    runtime.cacheChange("ped", 77, 55)
+    harness.assertTrue(spawns >= 3, "the re-registered listener follows the next ped change")
 end)
 
 harness.report("core")

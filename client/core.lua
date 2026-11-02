@@ -132,17 +132,38 @@ function Small.onSpawn(fn)
 
     -- The reliable path: watch the ped handle. A respawn recreates the ped, so
     -- a changed handle means "new body, reapply everything" even on servers
-    -- whose spawn flow never raises playerSpawned. Slow tick -- respawns are
-    -- rare and a second of delay reapplying a passive tweak is harmless.
-    Small.once(function()
-        local lastPed = 0
-        while true do
-            local ped = Kora.cache.ped()
-            if ped ~= lastPed and ped ~= 0 and DoesEntityExist(ped) then
-                lastPed = ped
-                fireAll()
-            end
-            Wait(1000)
+    -- whose spawn flow never raises playerSpawned. Driven by kora_lib's cache
+    -- 'ped' change event instead of a polling thread; handlers run in their own
+    -- thread (as they did on the old watcher) so they may still yield.
+    local lastPed, pendingPed = 0, nil
+    local function pedChanged(ped)
+        if not ped or ped == 0 or ped == lastPed then return end
+        if DoesEntityExist(ped) then
+            lastPed, pendingPed = ped, nil
+            CreateThread(fireAll)
+            return
         end
+        -- Handle not materialised yet: retry at the old 1 s cadence until it
+        -- exists or a newer handle supersedes it (one retry thread per handle).
+        if pendingPed == ped then return end
+        pendingPed = ped
+        CreateThread(function()
+            while pendingPed == ped and not DoesEntityExist(ped) do Wait(1000) end
+            if pendingPed == ped then
+                pendingPed = nil
+                pedChanged(ped)
+            end
+        end)
+    end
+
+    -- onChange registrations die with kora_lib, so re-register (and re-seed from
+    -- the current value, which onChange never reports) whenever it restarts.
+    local function watchPed()
+        Kora.cache.onChange('ped', pedChanged)
+        pedChanged(Kora.cache.ped())
+    end
+    watchPed()
+    AddEventHandler('onClientResourceStart', function(resource)
+        if resource == 'kora_lib' then watchPed() end
     end)
 end

@@ -38,9 +38,17 @@ local function changed(value)
         if setFrameActive then setFrameActive(true) end
     end
 end
-Kora.cache.onChange('vehicle', changed)
+-- onChange registrations die with kora_lib, so re-register and re-seed from the
+-- current vehicle whenever it restarts (changed() ignores an unchanged vehicle).
+local function watchVehicle()
+    Kora.cache.onChange('vehicle', changed)
+    changed(Kora.cache.vehicle())
+end
 announce()
-changed(Kora.cache.vehicle())
+watchVehicle()
+AddEventHandler('onClientResourceStart', function(resource)
+    if resource == 'kora_lib' then watchVehicle() end
+end)
 
 local function toggleSeatbelt()
     if not vehicle or IsPauseMenuActive() then return end
