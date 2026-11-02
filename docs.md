@@ -85,6 +85,8 @@ each spawning its own loop:
 - `Small.onFrame(fn)` — one shared `Wait(0)` thread drains every per-frame task.
   Reserved for natives that genuinely must be reasserted each frame
   (`BlockWeaponWheelThisFrame`, disabling a control).
+  Returns `setActive(bool)` so a conditional task (seatbelt on foot) can pause
+  itself; with no active task the thread idles at a 100 ms poll.
 - `Small.onInterval(ms, fn)` — one thread per **distinct** interval, shared by
   every feature that asked for that cadence. The default home for
   reassert-occasionally work (clearing the wanted level, sweeping for

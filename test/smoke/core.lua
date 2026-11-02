@@ -31,6 +31,24 @@ harness.test("onFrame runs every registered task once per step", function()
     harness.assertEqual(b, bBefore + 1, "task b should advance exactly one per step")
 end)
 
+harness.test("onFrame setActive pauses and resumes a task without disturbing others", function()
+    local paused, other = 0, 0
+    local setActive
+    setActive = Small.onFrame(function()
+        paused = paused + 1
+        setActive(false) -- pausing itself mid-frame must not skip the next task
+    end)
+    Small.onFrame(function() other = other + 1 end)
+    handle.step()
+    local pausedBefore, otherBefore = paused, other
+    handle.step()
+    harness.assertEqual(paused, pausedBefore, "a paused task must not run")
+    harness.assertEqual(other, otherBefore + 1, "other tasks keep running every frame")
+    setActive(true)
+    handle.step()
+    harness.assertEqual(paused, pausedBefore + 1, "a resumed task runs again")
+end)
+
 harness.test("onInterval shares one thread per distinct interval", function()
     local calls = 0
     Small.onInterval(2000, function() calls = calls + 1 end)

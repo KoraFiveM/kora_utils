@@ -26,11 +26,10 @@ disableWantedLevel()
 Small.onSpawn(capWantedLevel) -- SetMaxWantedLevel is player-scoped and resets with the ped
 Small.onInterval(Config.wantedLevel.interval or 2000, disableWantedLevel)
 
+-- ...ThisFrame native, so per-frame -- but on the shared coordinator thread,
+-- not a second Wait(0) coroutine of its own.
 if Config.wantedLevel.hideHudStar ~= false then
-    CreateThread(function()
-        while true do
-            HideHudComponentThisFrame(1) -- Wanted stars
-            Wait(0)
-        end
+    Small.onFrame(function()
+        HideHudComponentThisFrame(1) -- Wanted stars
     end)
 end

@@ -36,10 +36,11 @@ Kora={compat=dofile(root..'../kora_lib/compat/provider.lua')(),
  cache={onChange=function(_,fn) change=fn end,vehicle=function() return vehicle end},
  progressbar={start=function() if progressCallback then progressCallback() end;return completed end,cancel=function() end},
  callback={trigger=function() return accepted end},notify={send=function() end}}
-Small={onFrame=function(fn) frames[#frames+1]=fn end}
+local frameActive=true
+Small={onFrame=function(fn) frames[#frames+1]=fn;return function(on) frameActive=on~=false end end}
 dofile(root..'modules/seatbelt/client.lua')
 local function grant(on,uses) source=65535;events['qbsmallresources:client:harnessState'](on,uses) end
-local function frame() for _,fn in ipairs(frames) do fn() end end
+local function frame() if not frameActive then return end for _,fn in ipairs(frames) do fn() end end
 h.test('seatbelt command and legacy exports reflect real exit-control state',function()
  h.assertFalse(exportsNative.HasSeatbeltOn());commands.toggleseatbelt();h.assertTrue(exportsNative.HasSeatbeltOn())
  frame();h.assertEqual(#controls,2);h.assertEqual(controls[1][2],75);h.assertTrue(LocalPlayer.state.seatbelt)
@@ -75,5 +76,10 @@ h.test('progress errors and resource stop clean UI state',function()
  events['seatbelt:client:UseHarness']({slot=3},'error');h.assertFalse(LocalPlayer.state.inv_busy)
  grant(true,2);events.onClientResourceStop('kora_utils')
  h.assertFalse(exportsNative.HasHarness());h.assertFalse(LocalPlayer.state.inv_busy);h.assertFalse(LocalPlayer.state.seatbelt)
+end)
+h.test('frame work pauses on foot and resumes in a vehicle',function()
+ vehicle=nil;change(nil);frame();h.assertFalse(frameActive)
+ local before=#controls;commands.toggleseatbelt();frame();h.assertEqual(#controls,before)
+ vehicle=70;change(70);h.assertTrue(frameActive)
 end)
 h.report('seatbelt client')

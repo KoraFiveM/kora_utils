@@ -179,13 +179,13 @@ respawn). Registers nothing when left at stock (`multiplier = 1.0, limit =
 for a fixed list of ambient gang/service groups (when `calmNpcs`);
 `SetPlayerCanDoDriveBy(PlayerId(), false)` (when `disableDriveby`); a
 `GetGamePool('CPed')` sweep calling `SetPedDropsWeaponsWhenDead(ped, false)`
-(when `disablePedDrops`). Applied once on spawn and reasserted on
-`reassertInterval`.
+(when `disablePedDrops`, spread 32 peds per frame rather than one burst).
+Applied once on spawn and reasserted on `reassertInterval`.
 
 ### Tick coordinator (`client/core.lua`)
 The internal scheduling API every module above is built on:
 ```lua
-Small.onFrame(fn)      -- fn runs every frame (Wait(0)); one shared thread for the whole resource
+Small.onFrame(fn)      -- fn runs every frame (Wait(0)); one shared thread for the whole resource; returns setActive(bool) to pause/resume
 Small.onInterval(ms, fn) -- fn runs every ms; one thread per DISTINCT interval, shared across features
 Small.onSpawn(fn)      -- fn runs on first spawn and every respawn (playerSpawned / QBCore:Client:OnPlayerLoaded / ped-handle watch)
 Small.once(fn)         -- fn runs once, now, in its own thread (for yielding one-shot setup)
