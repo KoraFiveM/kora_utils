@@ -132,17 +132,35 @@ function Small.onSpawn(fn)
 
     -- The reliable path: watch the ped handle. A respawn recreates the ped, so
     -- a changed handle means "new body, reapply everything" even on servers
-    -- whose spawn flow never raises playerSpawned. Slow tick -- respawns are
-    -- rare and a second of delay reapplying a passive tweak is harmless.
-    Small.once(function()
-        local lastPed = 0
-        while true do
-            local ped = Kora.cache.ped()
-            if ped ~= lastPed and ped ~= 0 and DoesEntityExist(ped) then
-                lastPed = ped
-                fireAll()
-            end
-            Wait(1000)
+    -- whose spawn flow never raises playerSpawned. Driven by the kora_lib cache's
+    -- change callback (no polling thread); the current ped is checked once at
+    -- start for a resource started after the player spawned.
+    local lastPed = 0
+    local pending = false
+
+    -- The cache can report a new handle a moment before the entity exists, so
+    -- retry briefly (bounded) rather than waiting for the next change.
+    local function checkPed(ped)
+        if not ped or ped == 0 or ped == lastPed then return end
+        if DoesEntityExist(ped) then
+            lastPed = ped
+            fireAll()
+        elseif not pending then
+            pending = true
+            CreateThread(function()
+                for _ = 1, 20 do
+                    Wait(250)
+                    local current = Kora.cache.ped()
+                    if current and current ~= 0 and DoesEntityExist(current) then
+                        checkPed(current)
+                        break
+                    end
+                end
+                pending = false
+            end)
         end
-    end)
+    end
+
+    Kora.cache.onChange('ped', checkPed)
+    Small.once(function() checkPed(Kora.cache.ped()) end)
 end

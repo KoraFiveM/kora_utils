@@ -79,6 +79,36 @@ harness.test("onSpawn survives a throwing handler (pcall-wrapped)", function()
     harness.assertTrue(reached, "a later handler must still run after an earlier one errors")
 end)
 
+harness.test("onSpawn watches the cached ped via onChange instead of polling", function()
+    local savedSmall, savedKora = Small, Kora
+    Small, Kora = nil, nil
+    local runtime = mocks.install()
+    _G.__ped = 0
+    dofile(repoRoot .. "client/core.lua")
+    local waits = {}
+    local wait = Wait
+    Wait = function(ms) waits[#waits + 1] = ms; return wait(ms) end
+    local spawns = 0
+    Small.onSpawn(function() spawns = spawns + 1 end)
+    runtime.step()
+    harness.assertEqual(spawns, 0, "no spawn while the cached ped is not valid")
+    runtime.cacheChange('ped', 41, 0)
+    harness.assertEqual(spawns, 1, "a new valid ped handle reapplies spawn handlers")
+    runtime.cacheChange('ped', 41, 41)
+    harness.assertEqual(spawns, 1, "an unchanged handle does not refire")
+    runtime.cacheChange('ped', 0, 41)
+    harness.assertEqual(spawns, 1, "an invalid handle is ignored")
+    runtime.cacheChange('ped', 42, 41)
+    harness.assertEqual(spawns, 2, "a respawn handle refires")
+    runtime.step()
+    runtime.step()
+    for _, ms in ipairs(waits) do
+        harness.assertTrue(ms ~= 1000, "no 1 s ped poll remains")
+    end
+    Wait = wait
+    Small, Kora = savedSmall, savedKora
+end)
+
 harness.test("hash passes numbers through and hashes strings", function()
     harness.assertEqual(Small.hash(1234), 1234, "a numeric hash is returned unchanged")
     harness.assertEqual(Small.hash("WEAPON_PISTOL"), joaat("WEAPON_PISTOL"), "a string is joaat-hashed")
@@ -140,6 +170,7 @@ harness.test("dispatch and autoswap options emit their documented native calls",
         runtime.fire("QBCore:Client:OnPlayerLoaded")
         harness.assertEqual(#autoswap, requested and 3 or 0, "autoswap reasserts through existing lifecycle events")
         _G.__ped = 99
+        runtime.cacheChange('ped', 99, 0)
         runtime.step()
         harness.assertEqual(#dispatch, requested and 30 or 0, "dispatch reuses the existing periodic work")
         harness.assertEqual(#autoswap, requested and 4 or 0, "autoswap follows the existing ped replacement watcher")
