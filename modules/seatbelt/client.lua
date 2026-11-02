@@ -26,12 +26,17 @@ local function allowedVehicle(value)
     return value
 end
 
+local setFrameActive
+
 local function changed(value)
     local current = allowedVehicle(value)
     if current == vehicle then return end
     reset()
     vehicle = current
-    if vehicle then velocity = GetEntityVelocity(vehicle) end
+    if vehicle then
+        velocity = GetEntityVelocity(vehicle)
+        if setFrameActive then setFrameActive(true) end
+    end
 end
 Kora.cache.onChange('vehicle', changed)
 announce()
@@ -91,9 +96,13 @@ end
 
 -- Stock crash thresholds: a >25% speed drop from >110 km/h plus body damage;
 -- ordinary belts retain stock high-speed ejection risk, harnesses absorb it.
--- Existing coordinator supplies the only frame worker; on-foot work is inert.
-Small.onFrame(function()
-    if not vehicle then return end
+-- Existing coordinator supplies the only frame worker; the task pauses itself
+-- on foot and is resumed by `changed` on entering an allowed vehicle.
+setFrameActive = Small.onFrame(function()
+    if not vehicle then
+        if setFrameActive then setFrameActive(false) end
+        return
+    end
     local ped = PlayerPedId()
     if GetVehiclePedIsIn(ped, false) ~= vehicle or IsEntityDead(ped) then changed(nil); return end
     if seatbelt or harness then
@@ -135,6 +144,7 @@ Small.onFrame(function()
     end
     previousBody, velocity = body, GetEntityVelocity(vehicle)
 end)
+if setFrameActive and not vehicle then setFrameActive(false) end
 AddEventHandler('QBCore:Client:OnPlayerUnload', reset)
 AddEventHandler('onClientResourceStop', function(resource)
     if resource ~= GetCurrentResourceName() then return end

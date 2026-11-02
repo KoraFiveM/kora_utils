@@ -8,9 +8,13 @@
 Small = Small or {}
 
 -- Every-frame callbacks drained by one shared thread, created lazily on the
--- first onFrame registration and never torn down.
+-- first onFrame registration and never torn down. Only ACTIVE tasks live in
+-- frameTasks; pausing/resuming swaps in a fresh table (copy-on-write) so a task
+-- can pause itself mid-frame without shifting the list under the loop. With no
+-- active task the thread drops to a slow idle poll instead of resuming per frame.
 local frameTasks = {}
 local frameThreadStarted = false
+local FRAME_IDLE_WAIT = 100
 
 ---Run `fn` every frame (`Wait(0)`), for the lifetime of the resource. Intended
 ---for natives that must be reasserted each frame to take effect --
@@ -18,21 +22,39 @@ local frameThreadStarted = false
 ---action, etc. Anything that only needs reasserting occasionally belongs on
 ---`onInterval` instead; per-frame is the most expensive cadence there is, so
 ---reach for it only when the native genuinely demands it.
+---Returns `setActive(bool)`: a feature that is only conditionally relevant (e.g.
+---seatbelt while on foot) pauses itself so it costs nothing until resumed.
 ---@param fn fun()
+---@return fun(active: boolean)
 function Small.onFrame(fn)
-    frameTasks[#frameTasks + 1] = fn
+    local active = false
+    local function setActive(enabled)
+        enabled = enabled ~= false
+        if enabled == active then return end
+        active = enabled
+        local tasks = {}
+        for i = 1, #frameTasks do
+            if frameTasks[i] ~= fn then tasks[#tasks + 1] = frameTasks[i] end
+        end
+        if enabled then tasks[#tasks + 1] = fn end
+        frameTasks = tasks
+    end
+    setActive(true)
 
-    if frameThreadStarted then return end
+    if frameThreadStarted then return setActive end
     frameThreadStarted = true
 
     CreateThread(function()
         while true do
-            for i = 1, #frameTasks do
-                frameTasks[i]()
+            local tasks = frameTasks
+            local count = #tasks
+            for i = 1, count do
+                tasks[i]()
             end
-            Wait(0)
+            Wait(count > 0 and 0 or FRAME_IDLE_WAIT)
         end
     end)
+    return setActive
 end
 
 -- Interval buckets: one thread per DISTINCT interval, shared by every feature

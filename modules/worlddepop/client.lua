@@ -17,6 +17,8 @@ local calmGroups = {
     "FIREMAN", "MEDIC", "COP", "PRISONER",
 }
 local PLAYER_GROUP = joaat("PLAYER")
+-- Hash once at load; applyAmbient reruns every reassertInterval.
+for i = 1, #calmGroups do calmGroups[i] = joaat(calmGroups[i]) end
 
 local function applyAmbient()
     if cfg.disableRandomCops then
@@ -30,7 +32,7 @@ local function applyAmbient()
 
     if cfg.calmNpcs then
         for i = 1, #calmGroups do
-            SetRelationshipBetweenGroups(1, joaat(calmGroups[i]), PLAYER_GROUP)
+            SetRelationshipBetweenGroups(1, calmGroups[i], PLAYER_GROUP)
         end
     end
 
@@ -48,12 +50,26 @@ end
 
 -- Peds don't drop weapons when killed, closing off a route to picking up
 -- blacklisted guns. SetPedDropsWeaponsWhenDead is idempotent, so re-flagging is free.
+-- The sweep is spread over frames (SWEEP_BATCH peds per frame) instead of
+-- flagging the whole pool in one burst on the reassert tick. Its own sleeping
+-- thread rather than the shared interval bucket, because a yielding task would
+-- stall the bucket's other tasks.
+local SWEEP_BATCH = 32
+
 if cfg.disablePedDrops then
-    Small.onInterval(cfg.reassertInterval, function()
-        for _, ped in ipairs(GetGamePool("CPed")) do
-            if DoesEntityExist(ped) then
-                SetPedDropsWeaponsWhenDead(ped, false)
+    local interval = cfg.reassertInterval
+    assert(type(interval) == "number" and interval > 0, "worldDepop.reassertInterval must be a positive number")
+    Small.once(function()
+        while true do
+            local peds = GetGamePool("CPed")
+            for i = 1, #peds do
+                local ped = peds[i]
+                if DoesEntityExist(ped) then
+                    SetPedDropsWeaponsWhenDead(ped, false)
+                end
+                if i % SWEEP_BATCH == 0 then Wait(0) end
             end
+            Wait(interval)
         end
     end)
 end
