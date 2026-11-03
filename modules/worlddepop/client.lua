@@ -37,7 +37,7 @@ local function applyAmbient()
     end
 
     if cfg.disableDriveby then
-        SetPlayerCanDoDriveBy(Kora.cache.playerId(), false)
+        SetPlayerCanDoDriveBy(PlayerId(), false)
     end
 end
 
