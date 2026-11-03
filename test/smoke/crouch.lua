@@ -84,4 +84,9 @@ H.test('holding the bind enters a player-controlled prone locomotion state', fun
     H.assertEqual(_G.__lastAnimation, nil)
 end)
 
+H.test('prone helpers stay local to the module', function()
+    H.assertEqual(rawget(_G, 'playProneIdle'), nil)
+    H.assertEqual(rawget(_G, 'playProneStep'), nil)
+end)
+
 H.report('crouch')
