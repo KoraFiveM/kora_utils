@@ -1,6 +1,18 @@
 -- The legacy controls API shares the existing frame coordinator. Harness and
 -- seatbelt gameplay are separate contracts and are not fabricated here.
-local disabled, scheduled = {}, false
+local disabled, setActive = {}, nil
+
+-- The frame task runs only while a control is disabled (F#202).
+local function refresh()
+    if #disabled == 0 then
+        if setActive then setActive(false) end
+        return
+    end
+    if setActive then return setActive(true) end
+    setActive = Small.onFrame(function()
+        for index = 1, #disabled do DisableControlAction(2, disabled[index].control, true) end
+    end)
+end
 
 local function visitControls(value, handler)
     if type(value) == 'number' then value = { value } end
@@ -20,11 +32,7 @@ local function addDisableControls(controls)
     visitControls(controls, function(control)
         disabled[#disabled + 1] = { control = control, owner = owner }
     end)
-    if scheduled or #disabled == 0 then return end
-    scheduled = true
-    Small.onFrame(function()
-        for index = 1, #disabled do DisableControlAction(2, disabled[index].control, true) end
-    end)
+    refresh()
 end
 
 local function removeDisableControls(controls)
@@ -33,6 +41,7 @@ local function removeDisableControls(controls)
             if disabled[index].control == control then table.remove(disabled, index); break end
         end
     end)
+    refresh()
 end
 
 local function getDisableControls()
@@ -53,4 +62,5 @@ AddEventHandler('onClientResourceStop', function(resource)
             table.remove(disabled, index)
         end
     end
+    refresh()
 end)

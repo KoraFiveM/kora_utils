@@ -2,12 +2,18 @@
 -- caller changes a value, so an untouched server pays no per-frame cost.
 local hidden, owners = {}, {}
 local density, displayAmmo, ammoTouched = {}, true, false
-local scheduled = false
+local setActive
 
+-- Something is overridden: hidden components, a density multiplier or the ammo display.
+local function needed()
+    return #hidden > 0 or ammoTouched or next(density) ~= nil
+end
+
+-- The frame task runs only while an override remains (F#202).
 local function schedule()
-    if scheduled then return end
-    scheduled = true
-    Small.onFrame(function()
+    if setActive then return setActive(needed()) end
+    if not needed() then return end
+    setActive = Small.onFrame(function()
         for index = 1, #hidden do HideHudComponentThisFrame(hidden[index]) end
         if ammoTouched then DisplayAmmoThisFrame(displayAmmo) end
         if density.parked then SetParkedVehicleDensityMultiplierThisFrame(density.parked) end
@@ -38,7 +44,7 @@ local function addDisableHudComponents(value)
         hidden[#hidden + 1] = id
         owners[#hidden] = owner
     end
-    if #hidden > 0 then schedule() end
+    schedule()
 end
 
 local function removeDisableHudComponents(value)
@@ -51,6 +57,7 @@ local function removeDisableHudComponents(value)
             end
         end
     end
+    schedule()
 end
 
 local function getDisableHudComponents()
@@ -94,4 +101,5 @@ AddEventHandler('onClientResourceStop', function(resource)
             table.remove(owners, index)
         end
     end
+    schedule()
 end)

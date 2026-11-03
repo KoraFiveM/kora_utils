@@ -15,7 +15,8 @@ function SetVehicleDensityMultiplierThisFrame(v) density.vehicle=v end
 function SetRandomVehicleDensityMultiplierThisFrame(v) density.multiplier=v end
 function SetPedDensityMultiplierThisFrame(v) density.peds=v end
 function SetScenarioPedDensityMultiplierThisFrame(a, b) density.scenario={a,b} end
-Small = { onFrame=function(fn) scheduledFrames=scheduledFrames+1; frame=fn end }
+local active
+Small = { onFrame=function(fn) scheduledFrames=scheduledFrames+1; frame=fn; active=true; return function(on) active=on~=false end end }
 Kora = {compat=dofile(root .. '../kora_lib/compat/provider.lua')()}
 dofile(root .. 'client/hud.lua')
 local function legacy(name)
@@ -39,4 +40,19 @@ assert(scheduledFrames==1, 'single shared frame task')
 owner='other'; provided.addDisableHudComponents(9); events.onClientResourceStop('other')
 hidden={}; frame(); assert(#hidden==1 and hidden[1]==2, 'stopped owner components removed')
 assert(provided.getHandsup()==false); anim=true; assert(provided.getHandsup()==true)
+assert(active==true)
+-- With only components left, removing the last one and clearing other overrides pauses the task.
+provided.removeDisableHudComponents(2)
+assert(active==true, 'ammo and density overrides keep the task running')
+provided.DecorSet('peds', nil); provided.DecorSet('scenario', nil)
+assert(active==true, 'the ammo override keeps the task running')
+-- Fresh load: a transient caller must not leave the frame task running (F#202).
+frame, active = nil, nil
+dofile(root .. 'client/hud.lua')
+provided.addDisableHudComponents(3); assert(active==true)
+provided.removeDisableHudComponents(3); assert(active==false, 'last component removed pauses the task')
+provided.DecorSet('peds', 0.5); assert(active==true)
+provided.DecorSet('peds', nil); assert(active==false, 'cleared density pauses the task')
+owner='gone'; provided.addDisableHudComponents(4); events.onClientResourceStop('gone')
+assert(active==false, 'owner stop that clears the last override pauses the task')
 print('qbsmallresources legacy hud: all checks passed')
