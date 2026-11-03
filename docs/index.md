@@ -83,7 +83,7 @@ If a medical/ambulance resource on your server also drives
 -- config.lua
 Config.blacklist = {
     weapons = { 'WEAPON_RAILGUN', 'WEAPON_RPG', 'WEAPON_MINIGUN' }, -- stripped when kora_lib reports it selected
-    serverWeaponSweepInterval = 250,
+    serverWeaponSweepInterval = 2000, -- ms backstop strip on the server (0 = off); damage is always cancelled
     notifyOnStrip = true,  -- Kora.notify the player when a blacklisted weapon is taken away
 
     vehicles = { 'rhino', 'lazer', 'hydra', 'oppressor2' },  -- refused server-side via entityCreating
@@ -167,9 +167,11 @@ respawn). Registers nothing when left at stock (`multiplier = 1.0, limit =
   `notifyOnStrip` is true. This reuses kora_lib's shared weapon cache instead of
   running another client sweep.
 - Server: `entityCreating` + `CancelEvent()` refuses blacklisted
-  vehicle/ped models outright (requires OneSync); a second server-side
-  sweep on `serverWeaponSweepInterval` re-checks every connected player's
-  held weapon so a modified client can't bypass the client sweep.
+  vehicle/ped models outright (requires OneSync). `weaponDamageEvent` +
+  `CancelEvent()` drops damage from a blacklisted weapon, so a modified client
+  that skips the strip can't hurt anyone. A slow backstop sweep on
+  `serverWeaponSweepInterval` (default 2000 ms, 0 = off) removes held
+  blacklisted weapons from every player's server ped.
 
 ### `worlddepop` (client)
 `Config.worldDepop` — `disableRandomCops`, `disablePedDrops`, `calmNpcs`,

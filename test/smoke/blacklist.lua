@@ -66,4 +66,17 @@ harness.test("server allows the spawn of a non-blacklisted vehicle", function()
     harness.assertFalse(_G.__cancelled, "an allowed model must not be cancelled")
 end)
 
+harness.test("server cancels damage from a blacklisted weapon only", function()
+    _G.__cancelled = false
+    handle.fire("weaponDamageEvent", 3, { weaponType = joaat("WEAPON_RPG") })
+    harness.assertTrue(_G.__cancelled, "RPG damage must be cancelled")
+
+    _G.__cancelled = false
+    handle.fire("weaponDamageEvent", 3, { weaponType = joaat("WEAPON_PISTOL") })
+    harness.assertFalse(_G.__cancelled, "pistol damage must go through")
+
+    handle.fire("weaponDamageEvent", 3, nil)
+    harness.assertFalse(_G.__cancelled, "malformed damage events are ignored")
+end)
+
 harness.report("blacklist")

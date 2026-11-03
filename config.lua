@@ -96,7 +96,7 @@ Config.blacklist = {
         'WEAPON_RAYMINIGUN',
         'WEAPON_STINGER',
     },
-    serverWeaponSweepInterval = 250,
+    serverWeaponSweepInterval = 2000, -- ms; server backstop that strips held blacklisted weapons (0 = off). Damage from them is always cancelled
     notifyOnStrip = true,       -- Kora.notify the player when a blacklisted weapon is taken away
 
     -- Vehicle models a player may not spawn. Enforced SERVER-side (via OneSync's

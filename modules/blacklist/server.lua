@@ -36,10 +36,21 @@ if next(blacklisted) then
     end)
 end
 
--- Client stripping is immediate feedback, not authority. Re-check the weapon
--- held by every connected player's server-owned ped so a modified client
--- cannot retain and fire a prohibited weapon by disabling its local sweep.
+-- Client stripping is immediate feedback, not authority. Damage from a
+-- blacklisted weapon is cancelled here, so a modified client that skips its
+-- strip still can't hurt anyone with it (F#201).
 if next(blacklistedWeapons) then
+    AddEventHandler("weaponDamageEvent", function(_, data)
+        if type(data) == "table" and blacklistedWeapons[data.weaponType] then
+            CancelEvent()
+        end
+    end)
+end
+
+-- Slow backstop sweep removing the weapon from every player's server ped.
+-- 0 turns it off and relies on the damage cancel above.
+local sweepInterval = Config.blacklist.serverWeaponSweepInterval or 2000
+if next(blacklistedWeapons) and sweepInterval > 0 then
     CreateThread(function()
         while true do
             for _, rawSource in ipairs(GetPlayers()) do
@@ -49,7 +60,7 @@ if next(blacklistedWeapons) then
                     if blacklistedWeapons[weapon] then RemoveWeaponFromPed(ped, weapon) end
                 end
             end
-            Wait(Config.blacklist.serverWeaponSweepInterval or 250)
+            Wait(sweepInterval)
         end
     end)
 end
