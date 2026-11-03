@@ -158,23 +158,29 @@ harness.test("dispatch and autoswap options emit their documented native calls",
             "dispatch option must emit one disable for each documented service")
         harness.assertEqual(#autoswap, requested and 1 or 0,
             "autoswap option must apply on the initial spawn")
-        harness.assertEqual(#flags, case.disable and 2 or 0, "existing initial ped flags remain")
+        -- Both flags apply inline at load; the onSpawn seed may repeat the wheel
+        -- flag depending on which handler started the watcher.
+        local initial = #flags
+        harness.assertTrue(case.disable and (initial == 2 or initial == 3) or initial == 0,
+            "initial ped flags apply at load")
         if case.disable then
             harness.assertEqual(flags[1][1], 10)
             harness.assertEqual(flags[1][2], 48)
-            harness.assertEqual(flags[2][2], 42)
+            harness.assertEqual(flags[initial][2], 42)
         else
             harness.assertEqual(#waits, 0, "disabled modules register no scheduling work")
         end
         runtime.fire("playerSpawned")
         runtime.fire("QBCore:Client:OnPlayerLoaded")
         harness.assertEqual(#autoswap, requested and 3 or 0, "autoswap reasserts through existing lifecycle events")
+        harness.assertEqual(#flags, case.disable and initial + 4 or 0, "ped flags reapply on each spawn event (F#203)")
+        harness.assertEqual(#dispatch, requested and 45 or 0, "dispatch reapplies on each spawn event (F#203)")
         _G.__ped = 99
         runtime.cacheChange('ped', 99, 0)
         runtime.step()
-        harness.assertEqual(#dispatch, requested and 30 or 0, "dispatch reuses the existing periodic work")
+        harness.assertEqual(#dispatch, requested and 60 or 0, "dispatch follows the ped replacement watcher, not the tick")
         harness.assertEqual(#autoswap, requested and 4 or 0, "autoswap follows the existing ped replacement watcher")
-        harness.assertEqual(#flags, case.disable and 4 or 0, "existing flag cadence remains")
+        harness.assertEqual(#flags, case.disable and initial + 6 or 0, "flags follow ped replacement only; the tick adds none")
         for index, call in ipairs(dispatch) do
             harness.assertEqual(call[1], (index - 1) % 15 + 1, "dispatch service order and bounds remain exact")
             harness.assertEqual(call[2], false, "dispatch disabling passes boolean false")
@@ -182,11 +188,13 @@ harness.test("dispatch and autoswap options emit their documented native calls",
         for _, enabled in ipairs(autoswap) do harness.assertEqual(enabled, true) end
         for _, call in ipairs(flags) do harness.assertEqual(call[3], true) end
         if case.disable then
-            harness.assertEqual(flags[3][1], 99, "periodic wanted flag reads the current ped")
-            harness.assertEqual(flags[4][1], 99, "periodic wheel flag reads the current ped")
+            harness.assertEqual(flags[initial + 5][1], 99, "respawn wheel flag reads the current ped")
+            harness.assertEqual(flags[initial + 5][2], 48)
+            harness.assertEqual(flags[initial + 6][1], 99, "respawn wanted flag reads the current ped")
+            harness.assertEqual(flags[initial + 6][2], 42)
             for _, ms in ipairs(waits) do
-                harness.assertTrue(ms == 2000 or ms == 0 or ms == 1000,
-                    "only existing flag cadence and spawn watcher sleeps are used")
+                harness.assertTrue(ms == 2000 or ms == 0 or ms == 1000 or ms == 100,
+                    "only the wanted cadence, spawn watcher and idle frame sleeps are used")
             end
         end
     end

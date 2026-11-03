@@ -62,7 +62,7 @@ Config.wantedLevel = {
     disable = true,          -- wanted level forced to 0 and capped at 0
     disableDispatch = true,  -- switch off NPC dispatch (cops, ambulance, fire, ...)
     interval = 2000,         -- ms between belt-and-braces clears of any level that slipped through
-    hideHudStar = true,      -- hide the HUD wanted-star component every frame
+    hideHudStar = true,      -- hide the HUD wanted-star component while a level slipped through
 }
 ```
 
@@ -139,17 +139,18 @@ coordinator that ties them together.
 `Small.onInterval`.
 
 ### `weaponwheel` (client)
-`Config.weaponWheel` — `disable`, `blockAutoSwap`. Natives:
-`BlockWeaponWheelThisFrame`, `DisableControlAction(0, 37, true)` (per-frame,
-via `Small.onFrame`); `SetWeaponsNoAutoswap(true)` (per-spawn, via
-`Small.onSpawn`, when `blockAutoSwap` is set).
+`Config.weaponWheel` — `disable`, `blockAutoSwap`. Natives: ped config flag 48
+(disable weapon wheel) at load and on every spawn or ped change via
+`Small.onSpawn`; `SetWeaponsNoAutoswap(true)` (per-spawn, via `Small.onSpawn`,
+when `blockAutoSwap` is set). No interval or frame work.
 
 ### `wantedlevel` (client)
 `Config.wantedLevel` — `disable`, `disableDispatch`, `interval`, `hideHudStar`. Natives:
-`SetMaxWantedLevel(0)` on spawn; `HideHudComponentThisFrame(1)` every frame (when `hideHudStar`);
-`SetMaxWantedLevel(0)`, `SetPlayerWantedLevel`/`SetPlayerWantedLevelNow`/`ClearPlayerWantedLevel`
-clear (only when the level is above 0), and `EnableDispatchService(1..15, false)` (when
-`disableDispatch`) on `Config.wantedLevel.interval`.
+ped flag 42, `SetMaxWantedLevel(0)` and `EnableDispatchService(1..15, false)` (when
+`disableDispatch`) on spawn; `SetMaxWantedLevel(0)` plus a
+`SetPlayerWantedLevel`/`SetPlayerWantedLevelNow`/`ClearPlayerWantedLevel` clear (only when the
+level is above 0) on `Config.wantedLevel.interval`. `HideHudComponentThisFrame(1)` (when
+`hideHudStar`) shares the frame thread and only runs until the next tick after a level was cleared.
 
 ### `healthregen` (client)
 `Config.healthRegen` — `multiplier`, `limit`. Natives:

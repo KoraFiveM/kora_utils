@@ -46,7 +46,7 @@ Config.wantedLevel = {
     disable = true,          -- true = wanted level is forced to 0 and capped at 0
     disableDispatch = true,  -- true = NPC dispatch services (cops, ambulance, fire, ...) are switched off
     interval = 2000,         -- ms between re-applying the cap and clearing any level that slipped through (SetMaxWantedLevel(0) alone covers most, this is the belt-and-braces sweep)
-    hideHudStar = true,      -- true = also hide the HUD wanted-star component every frame (only runs while disable = true)
+    hideHudStar = true,      -- true = also hide the HUD wanted-star component; the per-frame hide only runs while a level slipped past the cap (only with disable = true)
 }
 
 -- ===========================================================================
