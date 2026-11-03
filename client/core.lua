@@ -117,7 +117,7 @@ function Small.onSpawn(fn)
         for i = 1, #spawnHandlers do
             local ok, err = pcall(spawnHandlers[i])
             if not ok then
-                print(("[qbsmallresources] onSpawn handler errored: %s"):format(tostring(err)))
+                print(("[kora_utils] onSpawn handler errored: %s"):format(tostring(err)))
             end
         end
     end

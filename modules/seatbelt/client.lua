@@ -16,7 +16,7 @@ local function reset()
     nextSample, peakSpeed, previousBody, frameBodyChange, peakTicks, damageDone = 0, 0, 0, 0, 0, false
     seatbelt, harness, harnessUses = false, false, 0
     announce()
-    TriggerServerEvent('qbsmallresources:server:leaveVehicle')
+    TriggerServerEvent('kora_utils:server:leaveVehicle')
 end
 
 local function allowedVehicle(value)
@@ -65,7 +65,7 @@ for name, handler in pairs({HasHarness=function() return harness end, HasSeatbel
     Kora.compat.provideExport('qb-smallresources', name, handler)
 end
 
-RegisterNetEvent('qbsmallresources:client:harnessState', function(enabled, uses)
+RegisterNetEvent('kora_utils:client:harnessState', function(enabled, uses)
     if source ~= 65535 then return end
     if enabled == true and vehicle then
         if not harness then seatbelt = not seatbelt end
@@ -86,10 +86,10 @@ RegisterNetEvent('seatbelt:client:UseHarness', function(item, token)
     LocalPlayer.state:set('inv_busy', false, true)
     busy = false
     if not ok or not completed or vehicle ~= selected then
-        TriggerServerEvent('qbsmallresources:server:cancelHarness', token)
+        TriggerServerEvent('kora_utils:server:cancelHarness', token)
         return
     end
-    if Kora.callback.trigger('qbsmallresources:server:finishHarness', {slot=item.slot}, token) ~= true then
+    if Kora.callback.trigger('kora_utils:server:finishHarness', {slot=item.slot}, token) ~= true then
         Kora.notify.send({title='Harness',message='The harness could not be equipped.',type='error'})
     end
 end)

@@ -39,7 +39,7 @@ Kora={compat=dofile(root..'../kora_lib/compat/provider.lua')(),
 local frameActive=true
 Small={onFrame=function(fn) frames[#frames+1]=fn;return function(on) frameActive=on~=false end end}
 dofile(root..'modules/seatbelt/client.lua')
-local function grant(on,uses) source=65535;events['qbsmallresources:client:harnessState'](on,uses) end
+local function grant(on,uses) source=65535;events['kora_utils:client:harnessState'](on,uses) end
 local function frame() if not frameActive then return end for _,fn in ipairs(frames) do fn() end end
 h.test('seatbelt command and legacy exports reflect real exit-control state',function()
  h.assertFalse(exportsNative.HasSeatbeltOn());commands.toggleseatbelt();h.assertTrue(exportsNative.HasSeatbeltOn())
@@ -47,14 +47,14 @@ h.test('seatbelt command and legacy exports reflect real exit-control state',fun
  commands.toggleseatbelt();h.assertFalse(exportsNative.HasSeatbeltOn())
 end)
 h.test('clients cannot self-grant harness via event or successful progress alone',function()
- source=0;events['qbsmallresources:client:harnessState'](true,100);h.assertFalse(exportsNative.HasHarness())
+ source=0;events['kora_utils:client:harnessState'](true,100);h.assertFalse(exportsNative.HasHarness())
  source=65535;events['seatbelt:client:UseHarness']({slot=3},'token')
  h.assertFalse(exportsNative.HasHarness());h.assertFalse(LocalPlayer.state.inv_busy)
  grant(true,4);h.assertTrue(exportsNative.HasHarness());h.assertTrue(exportsNative.HasSeatbeltOn())
 end)
 h.test('cancelled progress and vehicle exit release busy and equipment state',function()
  completed=false;events['seatbelt:client:UseHarness']({slot=3},'cancel')
- h.assertFalse(LocalPlayer.state.inv_busy);h.assertEqual(serverEvents[#serverEvents].name,'qbsmallresources:server:cancelHarness')
+ h.assertFalse(LocalPlayer.state.inv_busy);h.assertEqual(serverEvents[#serverEvents].name,'kora_utils:server:cancelHarness')
  vehicle=nil;change(nil);h.assertFalse(exportsNative.HasHarness());h.assertFalse(exportsNative.HasSeatbeltOn())
  h.assertFalse(LocalPlayer.state.seatbelt)
 end)

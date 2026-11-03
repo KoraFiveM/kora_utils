@@ -26,7 +26,7 @@ end
 
 local function publish(src)
     local state = equipped[src]
-    TriggerClientEvent('qbsmallresources:client:harnessState', src, state ~= nil, state and state.uses or 0)
+    TriggerClientEvent('kora_utils:client:harnessState', src, state ~= nil, state and state.uses or 0)
 end
 
 local function clear(src)
@@ -88,13 +88,13 @@ local function finish(src, supplied, token)
     return true
 end
 
-Kora.callback.register('qbsmallresources:server:finishHarness', finish, {rateLimit={max=4,window=10000}})
+Kora.callback.register('kora_utils:server:finishHarness', finish, {rateLimit={max=4,window=10000}})
 RegisterNetEvent('equip:harness', function(item) finish(source, item) end)
-RegisterNetEvent('qbsmallresources:server:cancelHarness', function(token)
+RegisterNetEvent('kora_utils:server:cancelHarness', function(token)
     local action = pending[source]
     if action and action.token == token then pending[source] = nil end
 end)
-RegisterNetEvent('qbsmallresources:server:leaveVehicle', function() clear(source) end)
+RegisterNetEvent('kora_utils:server:leaveVehicle', function() clear(source) end)
 
 -- Client hp/metadata are deliberately ignored. A report can only consume the
 -- sender's equipped item after a new body-health loss on that same vehicle.

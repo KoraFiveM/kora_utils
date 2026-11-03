@@ -20,7 +20,7 @@ function GetEntityRoutingBucket() return 0 end
 function GetVehicleType() return 'automobile' end
 function GetVehicleBodyHealth() return 1000 end
 Kora={resources={serverRegistry=function() return {track=function() end,untrack=function() end} end},
- callback={register=function(name,fn) if name=='qbsmallresources:server:finishHarness' then callback=fn end end}}
+ callback={register=function(name,fn) if name=='kora_utils:server:finishHarness' then callback=fn end end}}
 local core={
  getShared=function(_,_,name) return name=='harness' and {name='harness',weight=1000,unique=true,useable=true,type='item'} or nil end,
  getPlayerData=function(_,src,path) return src==1 and copy(path and player[path[1]] or player) end,
