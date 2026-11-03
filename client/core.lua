@@ -132,35 +132,38 @@ function Small.onSpawn(fn)
 
     -- The reliable path: watch the ped handle. A respawn recreates the ped, so
     -- a changed handle means "new body, reapply everything" even on servers
-    -- whose spawn flow never raises playerSpawned. Driven by the kora_lib cache's
-    -- change callback (no polling thread); the current ped is checked once at
-    -- start for a resource started after the player spawned.
-    local lastPed = 0
-    local pending = false
-
-    -- The cache can report a new handle a moment before the entity exists, so
-    -- retry briefly (bounded) rather than waiting for the next change.
-    local function checkPed(ped)
+    -- whose spawn flow never raises playerSpawned. Driven by kora_lib's cache
+    -- 'ped' change event instead of a polling thread; handlers run in their own
+    -- thread (as they did on the old watcher) so they may still yield.
+    local lastPed, pendingPed = 0, nil
+    local function pedChanged(ped)
         if not ped or ped == 0 or ped == lastPed then return end
         if DoesEntityExist(ped) then
-            lastPed = ped
-            fireAll()
-        elseif not pending then
-            pending = true
-            CreateThread(function()
-                for _ = 1, 20 do
-                    Wait(250)
-                    local current = Kora.cache.ped()
-                    if current and current ~= 0 and DoesEntityExist(current) then
-                        checkPed(current)
-                        break
-                    end
-                end
-                pending = false
-            end)
+            lastPed, pendingPed = ped, nil
+            CreateThread(fireAll)
+            return
         end
+        -- Handle not materialised yet: retry at the old 1 s cadence until it
+        -- exists or a newer handle supersedes it (one retry thread per handle).
+        if pendingPed == ped then return end
+        pendingPed = ped
+        CreateThread(function()
+            while pendingPed == ped and not DoesEntityExist(ped) do Wait(1000) end
+            if pendingPed == ped then
+                pendingPed = nil
+                pedChanged(ped)
+            end
+        end)
     end
 
-    Kora.cache.onChange('ped', checkPed)
-    Small.once(function() checkPed(Kora.cache.ped()) end)
+    -- onChange registrations die with kora_lib, so re-register (and re-seed from
+    -- the current value, which onChange never reports) whenever it restarts.
+    local function watchPed()
+        Kora.cache.onChange('ped', pedChanged)
+        pedChanged(Kora.cache.ped())
+    end
+    watchPed()
+    AddEventHandler('onClientResourceStart', function(resource)
+        if resource == 'kora_lib' then watchPed() end
+    end)
 end

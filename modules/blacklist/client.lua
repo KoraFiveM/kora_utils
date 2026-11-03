@@ -28,5 +28,13 @@ local function enforceWeaponBlacklist(weapon)
     end
 end
 
-Kora.cache.onChange('weapon', enforceWeaponBlacklist)
-enforceWeaponBlacklist(Kora.cache.weapon())
+-- onChange registrations die with kora_lib, so re-register and re-check the
+-- current weapon whenever it restarts.
+local function watchWeapon()
+    Kora.cache.onChange('weapon', enforceWeaponBlacklist)
+    enforceWeaponBlacklist(Kora.cache.weapon())
+end
+watchWeapon()
+AddEventHandler('onClientResourceStart', function(resource)
+    if resource == 'kora_lib' then watchWeapon() end
+end)
