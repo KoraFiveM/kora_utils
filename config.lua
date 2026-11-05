@@ -104,6 +104,7 @@ Config.blacklist = {
     vehicles = {
         'rhino', 'lazer', 'hydra', 'savage', 'buzzard',
         'oppressor', 'oppressor2', 'scramjet', 'deluxo', 'insurgent',
+        'blimp', 'blimp2', 'blimp3',
     },
 
     -- Ped models a player may not spawn (cop/military models used for griefing).
