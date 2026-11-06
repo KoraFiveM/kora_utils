@@ -18,6 +18,7 @@ Config = {
         proneForwardAnim = 'onfront_fwd',
         proneBackwardAnim = 'onfront_bwd',
         proneTurnSpeed = 1.0,
+        blockStockDuck = true,
     },
 }
 
@@ -82,6 +83,20 @@ H.test('holding the bind enters a player-controlled prone locomotion state', fun
     runtime.keybind('qbsmallresources_crouch', 'pressed')
     runtime.keybind('qbsmallresources_crouch', 'released')
     H.assertEqual(_G.__lastAnimation, nil)
+end)
+
+H.test('the stock duck stance (stealth) is cleared every frame while standing, and by crouch', function()
+    _G.__stealth = true
+    runtime.step()
+    H.assertEqual(_G.__stealth, false, 'standing still: stealth from a stock duck tap is undone next frame')
+
+    _G.__stealth = true
+    runtime.keybind('qbsmallresources_crouch', 'pressed')
+    runtime.keybind('qbsmallresources_crouch', 'released')
+    H.assertEqual(_G.__stealth, false, 'crouching clears stealth')
+    H.assertEqual(_G.__movementClipset, 'move_ped_crouched')
+    runtime.keybind('qbsmallresources_crouch', 'pressed')
+    runtime.keybind('qbsmallresources_crouch', 'released')
 end)
 
 H.report('crouch')

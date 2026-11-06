@@ -14,6 +14,8 @@ local loadedClipsets = {}
 local proneAnimationLoaded = false
 local proneMotion = nil
 local proneStepEndsAt = 0
+local nextReassertAt = 0
+local idleBlocked = false
 local frameWatcherActive = false
 local watcherId = 0
 
@@ -32,6 +34,14 @@ local function canChangeStance(ped)
         and not IsPedSwimming(ped)
         and not IsPedInAnyVehicle(ped, false)
         and not (LocalPlayer and LocalPlayer.state and LocalPlayer.state['qbemotemenu:active'])
+end
+
+-- GTA's INPUT_DUCK toggles stealth movement (and action mode) on the press
+-- frame, before the keybind callback runs. Stealth's idle fights the crouch
+-- clipset, so clear both whenever we set a stance.
+local function clearStockStance(ped)
+    SetPedUsingActionMode(ped, false, -1, 0)
+    if GetPedStealthMovement(ped) then SetPedStealthMovement(ped, false, 'DEFAULT_ACTION') end
 end
 
 -- Forward declared: stand() stops the frame watcher, and the watcher itself
@@ -60,8 +70,19 @@ local function startFrameWatcher()
                 if not canChangeStance(ped) then
                     stand(ped)
                 else
-                    SetPedUsingActionMode(ped, false, -1, 0)
-                    if stance == 'prone' then
+                    clearStockStance(ped)
+                    if stance == 'crouched' and (config.reassertInterval or 0) > 0 then
+                        -- After a few idle seconds the engine drops the override
+                        -- clipsets and the ped stands up. Re-apply them (a no-op
+                        -- while they are still set) so the crouch is held.
+                        local now = GetGameTimer()
+                        if now >= nextReassertAt then
+                            nextReassertAt = now + config.reassertInterval
+                            SetPedMovementClipset(ped, config.crouchClipset, 0.25)
+                            SetPedStrafeClipset(ped, config.crouchStrafeClipset)
+                            if idleBlocked then SetPedCanPlayAmbientIdles(ped, true, true) end
+                        end
+                    elseif stance == 'prone' then
                         DisableControlAction(0, 21, true) -- INPUT_SPRINT
                         DisableControlAction(0, 22, true) -- INPUT_JUMP
 
@@ -135,7 +156,11 @@ stand = function(ped)
     if stance == 'prone' then stopProneAnimation(ped) end
     restoreWalkStyle(ped)
     stopFrameWatcher()
-    SetPedUsingActionMode(ped, false, -1, 0)
+    clearStockStance(ped)
+    if idleBlocked then
+        SetPedCanPlayAmbientIdles(ped, false, false)
+        idleBlocked = false
+    end
     releaseAssets()
     stance = 'standing'
 end
@@ -154,10 +179,17 @@ local function crouch(ped)
     end
 
     if stance == 'prone' then stopProneAnimation(ped) end
-    SetPedUsingActionMode(ped, false, -1, 0)
+    clearStockStance(ped)
     SetPedMovementClipset(ped, config.crouchClipset, 0.25)
     SetPedStrafeClipset(ped, config.crouchStrafeClipset)
+    if config.blockIdleClips ~= false then
+        -- The engine's standing-idle fidget (after ~10s still) can play a
+        -- stand-up and re-crouch. Block ambient idles while crouched.
+        SetPedCanPlayAmbientIdles(ped, true, true)
+        idleBlocked = true
+    end
     stance = 'crouched'
+    nextReassertAt = GetGameTimer() + (config.reassertInterval or 0)
     startFrameWatcher()
     return true
 end
@@ -168,7 +200,7 @@ local function prone(ped)
     if dict == false then return false end
     proneAnimationLoaded = true
 
-    SetPedUsingActionMode(ped, false, -1, 0)
+    clearStockStance(ped)
     -- `move_crawl` is an animation dictionary, not a movement clipset. Passing
     -- it to SetPedMovementClipset leaves the skeleton without valid locomotion
     -- clips and produces a T-pose. Clear any crouch clipsets, then hold the end
@@ -240,11 +272,27 @@ Kora.keybind.add({
     end,
 })
 
+-- The watcher above only starts after the keybind fires, a frame after the
+-- stock duck already toggled stealth. Block INPUT_DUCK every frame on foot so
+-- a tap can never reach GTA's own stance; paused while in a vehicle.
+if config.blockStockDuck ~= false then
+    local setBlocking = Small.onFrame(function()
+        DisableControlAction(0, 36, true)
+        if stance ~= 'standing' then return end
+        local ped = PlayerPedId()
+        if GetPedStealthMovement(ped) then clearStockStance(ped) end
+    end)
+    Small.onInterval(500, function()
+        setBlocking(not IsPedInAnyVehicle(PlayerPedId(), false))
+    end)
+end
+
 Small.onSpawn(function()
     -- A respawn creates a new ped with stock movement. Forget the old ped's
     -- state so a held/released key cannot apply a stale stance to the new one,
     -- and stop the watcher so it isn't left running against the new ped.
     stance = 'standing'
+    idleBlocked = false
     keyHeld = false
     heldPressId = nil
     stopFrameWatcher()

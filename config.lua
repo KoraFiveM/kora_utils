@@ -75,6 +75,9 @@ Config.crouch = {
     proneForwardAnim = 'onfront_fwd',
     proneBackwardAnim = 'onfront_bwd',
     proneTurnSpeed = 1.0,                   -- degrees per frame while turning
+    reassertInterval = 100,                 -- ms between re-applying the crouch clipsets while crouched (the engine drops them after ~10s idle); 0 = off
+    blockIdleClips = true,                  -- block the engine's ambient idle fidget while crouched (stops the stand-up/re-crouch loop after ~10s still)
+    blockStockDuck = true,                 -- always block GTA's own duck/stealth key while on foot (it fires a frame before the bind)
 }
 
 -- ===========================================================================
@@ -107,6 +110,8 @@ Config.blacklist = {
         'blimp', 'blimp2', 'blimp3',
     },
 
+    notifyOnVehicleBlock = true, -- Kora.notify the player when their blacklisted vehicle spawn is refused
+
     -- Ped models a player may not spawn (cop/military models used for griefing).
     -- Same server-side entityCreating enforcement as vehicles.
     peds = {
@@ -137,7 +142,25 @@ Config.seatbelt = {
     equipDuration = 5000,
     actionLifetime = 30000,
     crashCooldown = 1000,
-    removeEmptyHarness = true, -- true = the seatbelt key removes a harness whose last use was consumed (no item left to remove it with)
+    removeEmptyHarness = true, -- true = the seatbelt key removes a harness whose last use was consumed (no item left to remove it with). Only used while harness.separateFromSeatbelt is false
+    harness = {
+        -- true = the race harness is its own thing: attaching/removing it never
+        -- changes the seatbelt, the seatbelt key never touches the harness, and an
+        -- attached harness alone blocks exiting (F). false = old behaviour (the
+        -- harness turns the seatbelt on/off with it).
+        separateFromSeatbelt = true,
+        -- Chat command (and the key mapping below) that attaches/removes the
+        -- harness while seated in a vehicle. Attaching needs a harness item,
+        -- removing does not. false or '' = no command and no key mapping.
+        command = 'raceharness',
+        -- Default key for "Toggle race harness" in Settings > Key Bindings > FiveM.
+        -- '' = unbound; each player picks their own key there.
+        keybind = '',
+        -- true = old behaviour: the harness progress bar also writes the
+        -- inv_busy state bag itself. kora_inventory owns that bag and already
+        -- blocks item use while any progress bar runs, so leave this false.
+        lockInventory = false,
+    },
 }
 
 -- Registers this resource-owned configuration with kora_lib without changing its public Config table.

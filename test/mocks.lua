@@ -102,9 +102,13 @@ function M.install()
     function _G.RemoveAnimDict(_) end
     function _G.SetPedMovementClipset(_, clipset, _) _G.__movementClipset = clipset end
     function _G.SetPedStrafeClipset(_, clipset) _G.__strafeClipset = clipset end
+    function _G.SetPedCanPlayAmbientIdles(_, block, _) _G.__idlesBlocked = block == true end
     function _G.ResetPedMovementClipset(_, _) _G.__movementClipset = nil end
     function _G.ResetPedStrafeClipset(_) _G.__strafeClipset = nil end
     function _G.SetPedUsingActionMode(_, _, _, _) end
+    _G.__stealth = false
+    function _G.GetPedStealthMovement(_) return _G.__stealth end
+    function _G.SetPedStealthMovement(_, enabled, _) _G.__stealth = enabled == true end
     function _G.TaskPlayAnim(_, dict, clip, _, _, _, flag, _, _, _, _) _G.__lastAnimation = { dict = dict, clip = clip, flag = flag } end
     function _G.TaskPlayAnimAdvanced(_, dict, clip, _, _, _, _, _, _, _, _, _, flag, animTime, _, _)
         _G.__lastAnimation = { dict = dict, clip = clip, flag = flag, animTime = animTime }

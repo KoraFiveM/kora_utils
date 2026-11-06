@@ -1,6 +1,10 @@
 if not Config.seatbelt.enabled then return end
 
 local seatbelt, harness, harnessUses, busy = false, false, 0, false
+local harnessConfig = Config.seatbelt.harness or {}
+-- The race harness is its own state: it never turns the belt on/off and the
+-- belt key never touches it. false keeps the old coupled behaviour.
+local separateHarness = harnessConfig.separateFromSeatbelt ~= false
 local vehicle, velocity = nil, nil
 local nextSample, peakSpeed, previousBody, frameBodyChange, peakTicks, damageDone = 0, 0, 0, 0, 0, false
 
@@ -9,6 +13,10 @@ local function announce()
     LocalPlayer.state:set('seatbelt', seatbelt, false)
     TriggerEvent('seatbelt:client:ToggleSeatbelt', seatbelt)
     TriggerEvent('hud:client:UpdateHarness', harnessUses)
+    -- harnessUses is 0 both with no harness and with a spent last-use harness,
+    -- so the HUD icon reads this attached flag (same local pattern as the belt).
+    LocalPlayer.state:set('harness', harness, false)
+    TriggerEvent('seatbelt:client:ToggleHarness', harness, harnessUses)
 end
 
 local function reset()
@@ -53,7 +61,7 @@ end)
 local function toggleSeatbelt()
     if not vehicle or IsPauseMenuActive() then return end
     -- The last use consumes the item, so nothing is left to remove the harness with.
-    if Config.seatbelt.removeEmptyHarness and harness and harnessUses == 0 then
+    if not separateHarness and Config.seatbelt.removeEmptyHarness and harness and harnessUses == 0 then
         TriggerServerEvent('qbsmallresources:server:removeHarness')
         return
     end
@@ -73,25 +81,34 @@ end
 RegisterNetEvent('qbsmallresources:client:harnessState', function(enabled, uses)
     if source ~= 65535 then return end
     if enabled == true and vehicle then
-        if not harness then seatbelt = true end
+        if not harness and not separateHarness then seatbelt = true end
         harness, harnessUses = true, math.max(0, tonumber(uses) or 0)
     else
-        if harness then seatbelt = false end
+        if harness and not separateHarness then seatbelt = false end
         harness, harnessUses = false, 0
     end
     announce()
 end)
 
 RegisterNetEvent('seatbelt:client:UseHarness', function(item, token)
-    if busy or LocalPlayer.state.inv_busy or not vehicle or type(item) ~= 'table' then return end
+    if type(item) ~= 'table' then return end
+    if busy or LocalPlayer.state.inv_busy or not vehicle then
+        -- Refused locally: drop the server's pending action now instead of
+        -- leaving it to block every harness use until it expires.
+        if token ~= nil then TriggerServerEvent('qbsmallresources:server:cancelHarness', token) end
+        return
+    end
     busy = true
     local selected = vehicle
-    LocalPlayer.state:set('inv_busy', true, true)
+    -- kora_inventory owns inv_busy and already blocks item use while any
+    -- progress bar runs; writing it here too could fight its own session state.
+    local lockInventory = harnessConfig.lockInventory == true
+    if lockInventory then LocalPlayer.state:set('inv_busy', true, true) end
     local ok, completed = pcall(Kora.progressbar.start, {
         label = harness and 'Removing Race Harness' or 'Attaching Race Harness',
         duration = Config.seatbelt.equipDuration, canCancel = true, disable = { combat = true },
     })
-    LocalPlayer.state:set('inv_busy', false, true)
+    if lockInventory then LocalPlayer.state:set('inv_busy', false, true) end
     busy = false
     if not ok or not completed or vehicle ~= selected then
         TriggerServerEvent('qbsmallresources:server:cancelHarness', token)
@@ -101,6 +118,26 @@ RegisterNetEvent('seatbelt:client:UseHarness', function(item, token)
         Kora.notify.send({title='Harness',message='The harness could not be equipped.',type='error'})
     end
 end)
+
+-- Key/command toggle. The server decides attach or remove: removing needs no
+-- item (the last use may have consumed it), attaching finds a real harness
+-- item server-side. Both then run the same progress flow as the item.
+local harnessCommand = harnessConfig.command
+if type(harnessCommand) == 'string' and harnessCommand ~= '' then
+    local requesting = false
+    RegisterCommand(harnessCommand, function()
+        if requesting or busy or not vehicle or IsPauseMenuActive() then return end
+        requesting = true
+        CreateThread(function()
+            local ok, result = pcall(Kora.callback.trigger, 'qbsmallresources:server:toggleHarness')
+            requesting = false
+            if ok and result == 'noitem' then
+                Kora.notify.send({title='Race Harness',message='You do not have a race harness to use',type='error'})
+            end
+        end)
+    end, false)
+    RegisterKeyMapping(harnessCommand, 'Toggle Race Harness', 'keyboard', harnessConfig.keybind or '')
+end
 
 local function eject(ped)
     local coords = GetOffsetFromEntityInWorldCoords(vehicle, 1.0, 0.0, 1.0)
@@ -164,7 +201,9 @@ if setFrameActive and not vehicle then setFrameActive(false) end
 AddEventHandler('QBCore:Client:OnPlayerUnload', reset)
 AddEventHandler('onClientResourceStop', function(resource)
     if resource ~= GetCurrentResourceName() then return end
-    if busy then Kora.progressbar.cancel() end
-    LocalPlayer.state:set('inv_busy', false, true)
+    if busy then
+        Kora.progressbar.cancel()
+        if harnessConfig.lockInventory == true then LocalPlayer.state:set('inv_busy', false, true) end
+    end
     reset()
 end)

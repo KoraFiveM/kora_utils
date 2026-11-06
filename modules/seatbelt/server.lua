@@ -46,13 +46,11 @@ local function consumeUse(src, item, uses)
     return ok == true, info.uses
 end
 
-local function beginUse(src, supplied)
-    if busy[src] or pending[src] then return end
-    local vehicle = currentVehicle(src)
-    local item = vehicle and type(supplied) == 'table' and harnessItem(src, supplied.slot)
-    if not item then return end
+-- `item` is a validated harness item, or nil for an item-less removal (the
+-- key/command path); that action carries slot=false, which finish() matches.
+local function startAction(src, vehicle, item)
     sequence = sequence + 1
-    local action = { token = tostring(sequence), slot = item.slot, vehicle = vehicle,
+    local action = { token = tostring(sequence), slot = item and item.slot or false, vehicle = vehicle,
         started = GetGameTimer(), remove = equipped[src] ~= nil }
     pending[src] = action
     SetTimeout(Config.seatbelt.actionLifetime, function()
@@ -60,12 +58,49 @@ local function beginUse(src, supplied)
     end)
     -- Keep the legacy item argument. The extra token is used by this native
     -- client; unchanged stock clients still complete through equip:harness.
-    TriggerClientEvent('seatbelt:client:UseHarness', src, item, action.token)
+    TriggerClientEvent('seatbelt:client:UseHarness', src, item or { name = 'harness', slot = false }, action.token)
+end
+
+local function beginUse(src, supplied)
+    if busy[src] or pending[src] then return end
+    local vehicle = currentVehicle(src)
+    local item = vehicle and type(supplied) == 'table' and harnessItem(src, supplied.slot)
+    if not item then return end
+    startAction(src, vehicle, item)
+end
+
+-- First valid harness the player owns, lowest slot first (durability rules as harnessItem).
+local function ownedHarness(src)
+    local ok, list = pcall(function() return exports.kora_core:getItemsByName(src, 'harness') end)
+    if not ok or type(list) ~= 'table' then return nil end
+    local best
+    for _, entry in pairs(list) do
+        local item = type(entry) == 'table' and harnessItem(src, entry.slot)
+        if item and (not best or item.slot < best.slot) then best = item end
+    end
+    return best
+end
+
+-- Key/command toggle. Removing an attached harness needs no item, so a player
+-- whose last use consumed it is never stuck; attaching needs a real item.
+local function toggle(src)
+    if busy[src] or pending[src] then return 'busy' end
+    local vehicle = currentVehicle(src)
+    if not vehicle then return 'novehicle' end
+    if equipped[src] then
+        if equipped[src].vehicle ~= vehicle then clear(src); return 'removed' end
+        startAction(src, vehicle, nil)
+        return 'removing'
+    end
+    local item = ownedHarness(src)
+    if not item then return 'noitem' end
+    startAction(src, vehicle, item)
+    return 'attaching'
 end
 
 local function finish(src, supplied, token)
     local action = pending[src]
-    if busy[src] or not action or type(supplied) ~= 'table' or supplied.slot ~= action.slot then return false end
+    if busy[src] or not action or type(supplied) ~= 'table' or (supplied.slot or false) ~= action.slot then return false end
     if token ~= nil and token ~= action.token then return false end
     pending[src] = nil
     local elapsed = GetGameTimer() - action.started
@@ -89,6 +124,10 @@ local function finish(src, supplied, token)
 end
 
 Kora.callback.register('qbsmallresources:server:finishHarness', finish, {rateLimit={max=4,window=10000}})
+local harnessCommand = (Config.seatbelt.harness or {}).command
+if type(harnessCommand) == 'string' and harnessCommand ~= '' then
+    Kora.callback.register('qbsmallresources:server:toggleHarness', toggle, {rateLimit={max=4,window=10000}})
+end
 RegisterNetEvent('equip:harness', function(item) finish(source, item) end)
 RegisterNetEvent('qbsmallresources:server:cancelHarness', function(token)
     local action = pending[source]

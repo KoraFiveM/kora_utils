@@ -9,6 +9,17 @@
 -- entityCreating -- a client-only spawn check is trivially bypassed, so it
 -- would be security theatre here.
 
+-- Server refused a blacklisted vehicle spawn (see server.lua) -- tell the player.
+-- Registered before the weapon early-return so it works with no weapons listed.
+RegisterNetEvent("kora_utils:blacklist:vehicleBlocked", function()
+    if not Config.blacklist.notifyOnVehicleBlock then return end
+    Kora.notify.send({
+        title = "Vehicle Blacklist",
+        message = "That vehicle is not allowed on this server.",
+        type = "error",
+    })
+end)
+
 local blacklistedWeapons = Small.hashSet(Config.blacklist.weapons)
 
 -- next() on an empty set is nil -- if nothing is blacklisted, register no listener.

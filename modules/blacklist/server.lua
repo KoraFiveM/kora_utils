@@ -28,10 +28,34 @@ for _, weapon in ipairs(Config.blacklist.weapons or {}) do
 end
 
 -- Nothing blacklisted -> don't even register the handler.
+local lastNotified = {}
+
+-- Tell the spawning player their vehicle was refused. At entityCreating the
+-- entity's owner is the client that requested it. Throttled per player so a
+-- spawn loop can't spam events.
+local function notifyBlocked(entity)
+    if not Config.blacklist.notifyOnVehicleBlock then return end
+    if GetEntityType(entity) ~= 2 then return end
+
+    local owner = NetworkGetEntityOwner(entity)
+    if not owner or owner <= 0 then return end
+
+    local now = GetGameTimer()
+    if lastNotified[owner] and now - lastNotified[owner] < 1000 then return end
+    lastNotified[owner] = now
+
+    TriggerClientEvent("kora_utils:blacklist:vehicleBlocked", owner)
+end
+
+AddEventHandler("playerDropped", function()
+    lastNotified[source] = nil
+end)
+
 if next(blacklisted) then
     AddEventHandler("entityCreating", function(entity)
         if blacklisted[GetEntityModel(entity)] then
             CancelEvent()
+            notifyBlocked(entity)
         end
     end)
 end
