@@ -137,6 +137,7 @@ Config.seatbelt = {
     equipDuration = 5000,
     actionLifetime = 30000,
     crashCooldown = 1000,
+    removeEmptyHarness = true, -- true = the seatbelt key removes a harness whose last use was consumed (no item left to remove it with)
 }
 
 -- Registers this resource-owned configuration with kora_lib without changing its public Config table.

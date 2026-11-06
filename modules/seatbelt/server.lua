@@ -94,6 +94,12 @@ RegisterNetEvent('qbsmallresources:server:cancelHarness', function(token)
     local action = pending[source]
     if action and action.token == token then pending[source] = nil end
 end)
+RegisterNetEvent('qbsmallresources:server:removeHarness', function()
+    local src = source
+    local state = equipped[src]
+    if not Config.seatbelt.removeEmptyHarness or not state or state.uses ~= 0 or busy[src] or pending[src] then return end
+    clear(src)
+end)
 RegisterNetEvent('qbsmallresources:server:leaveVehicle', function() clear(source) end)
 
 -- Client hp/metadata are deliberately ignored. A report can only consume the

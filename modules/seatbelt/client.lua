@@ -52,6 +52,11 @@ end)
 
 local function toggleSeatbelt()
     if not vehicle or IsPauseMenuActive() then return end
+    -- The last use consumes the item, so nothing is left to remove the harness with.
+    if Config.seatbelt.removeEmptyHarness and harness and harnessUses == 0 then
+        TriggerServerEvent('qbsmallresources:server:removeHarness')
+        return
+    end
     seatbelt = not seatbelt
     announce()
     TriggerServerEvent('InteractSound_SV:PlayWithinDistance', 5.0, seatbelt and 'carbuckle' or 'carunbuckle', 0.25)
@@ -68,9 +73,12 @@ end
 RegisterNetEvent('qbsmallresources:client:harnessState', function(enabled, uses)
     if source ~= 65535 then return end
     if enabled == true and vehicle then
-        if not harness then seatbelt = not seatbelt end
+        if not harness then seatbelt = true end
         harness, harnessUses = true, math.max(0, tonumber(uses) or 0)
-    else harness, harnessUses = false, 0 end
+    else
+        if harness then seatbelt = false end
+        harness, harnessUses = false, 0
+    end
     announce()
 end)
 

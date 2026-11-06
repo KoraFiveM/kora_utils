@@ -15,6 +15,7 @@ local proneAnimationLoaded = false
 local proneMotion = nil
 local proneStepEndsAt = 0
 local frameWatcherActive = false
+local watcherId = 0
 
 local proneStepDuration = {
     forward = 820,
@@ -44,9 +45,11 @@ end
 local function startFrameWatcher()
     if frameWatcherActive then return end
     frameWatcherActive = true
+    watcherId = watcherId + 1
+    local myId = watcherId
 
     CreateThread(function()
-        while frameWatcherActive do
+        while frameWatcherActive and watcherId == myId do
             -- INPUT_DUCK (36) is the stock action/fighting stance. It must be
             -- disabled every frame the watcher is running so the keybind
             -- never leaves the player in that stance.
@@ -86,6 +89,13 @@ local function startFrameWatcher()
                         end
                     end
                 end
+            end
+
+            -- Started on key press only to swallow the stock duck; nothing left
+            -- to watch once the key is up and we are standing.
+            if stance == 'standing' and not keyHeld then
+                if watcherId == myId then frameWatcherActive = false end
+                return
             end
 
             Wait(0)
@@ -208,6 +218,9 @@ Kora.keybind.add({
     onPressed = function()
         if keyHeld then return end
         keyHeld = true
+        -- The stock INPUT_DUCK fires on the press itself; block it from this
+        -- frame on, not only once the crouch is applied on release.
+        startFrameWatcher()
         pressId = pressId + 1
         local currentPress = pressId
 
