@@ -37,6 +37,12 @@ local function notifyBlocked(entity)
     if not Config.blacklist.notifyOnVehicleBlock then return end
     if GetEntityType(entity) ~= 2 then return end
 
+    -- Ambient traffic/parked/scenario/blimp spawns (population types 1-5) are
+    -- created by the game on a nearby client, not requested by the player.
+    -- Still refused, but the owner didn't ask for it so don't tell them.
+    local popType = GetEntityPopulationType(entity)
+    if popType >= 1 and popType <= 5 then return end
+
     local owner = NetworkGetEntityOwner(entity)
     if not owner or owner <= 0 then return end
 

@@ -45,8 +45,9 @@ local function clearStockStance(ped)
 end
 
 -- Forward declared: stand() stops the frame watcher, and the watcher itself
--- can call stand() when canChangeStance fails mid-loop.
-local stand
+-- can call stand() when canChangeStance fails mid-loop. playProneIdle/
+-- playProneStep are used inside the watcher but defined below it.
+local stand, playProneIdle, playProneStep
 
 local function stopFrameWatcher()
     frameWatcherActive = false
@@ -218,7 +219,7 @@ local function prone(ped)
     return true
 end
 
-function playProneIdle(ped, clip)
+playProneIdle = function(ped, clip)
     local coords = GetEntityCoords(ped)
     TaskPlayAnimAdvanced(ped, config.proneAnimDict, clip,
         coords.x, coords.y, coords.z, 0.0, 0.0, GetEntityHeading(ped),
@@ -227,7 +228,7 @@ function playProneIdle(ped, clip)
     proneStepEndsAt = 0
 end
 
-function playProneStep(ped, direction, now)
+playProneStep = function(ped, direction, now)
     local clip = direction == 'forward' and config.proneForwardAnim or config.proneBackwardAnim
     TaskPlayAnim(ped, config.proneAnimDict, clip, 8.0, -8.0, -1, 2, 0.0, false, false, false)
     proneMotion = direction
