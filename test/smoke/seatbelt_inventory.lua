@@ -1,4 +1,4 @@
-local dir=debug.getinfo(1,'S').source:match('@?(.*/)');local resource=dir..'../../';local inv=resource..'../kora_inventory/'
+local dir=debug.getinfo(1,'S').source:match('@?(.*/)');local resource=dir..'../../';local inv=dofile(resource..'test/resource_path.lua')(resource,'kora_inventory')
 local function copy(v) if type(v)~='table' then return v end local out={} for k,x in pairs(v) do out[k]=copy(x) end return out end
 local player={citizenid='HARNESS',items={[3]={name='harness',amount=1,slot=3,info={uses=5,label='keep'},metadata={uses=99}}}}
 local writes, usable, callback, now = 0,nil,nil,0

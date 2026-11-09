@@ -1,7 +1,3 @@
--- Minimal FiveM native stand-ins for smoke-testing kora_utils under plain
--- Lua. Only the natives the tested modules actually touch are mocked; anything
--- unused is deliberately absent so an accidental new dependency surfaces as a
--- nil-call failure rather than passing silently.
 local M = {}
 
 ---Installs mocked globals into _G and returns a handle for driving/inspecting
@@ -12,11 +8,6 @@ function M.install()
     local eventHandlers = {}
     local cacheChangeHandlers = {}
 
-    -- Scheduling
-    -- CreateThread resumes the body once (like FiveM): a one-shot thread runs to
-    -- completion, a `while true ... Wait() end` thread runs one iteration then
-    -- sits suspended. step() resumes every still-suspended thread once more, so
-    -- tick loops are testable without hanging.
     function _G.CreateThread(fn)
         local co = coroutine.create(fn)
         threads[#threads + 1] = co
@@ -26,25 +17,29 @@ function M.install()
 
     function _G.Wait(_) coroutine.yield() end
 
+    local timers = {}
+    function _G.SetTimeout(ms, fn)
+        timers[#timers + 1] = { at = _G.__gameTimer + ms, fn = fn }
+    end
+
+    local stateBagHandlers = {}
+    function _G.AddStateBagChangeHandler(key, bagFilter, fn)
+        stateBagHandlers[#stateBagHandlers + 1] = { key = key, bagFilter = bagFilter, fn = fn }
+    end
+    function _G.GetPlayerServerId(_) return 1 end
+    _G.LocalPlayer = { state = {} }
+
     function _G.AddEventHandler(name, cb)
         eventHandlers[name] = eventHandlers[name] or {}
         table.insert(eventHandlers[name], cb)
     end
 
-    -- Same registry as AddEventHandler: the only difference in the real runtime
-    -- is that this one marks the name safe to receive over the network, and the
-    -- harness has no network. Modules must still use it for server-fired events
-    -- (e.g. QBCore:Client:OnPlayerLoaded) or CFX silently skips the handler.
     _G.RegisterNetEvent = _G.AddEventHandler
 
     function _G.TriggerEvent(name, ...)
         for _, fn in ipairs(eventHandlers[name] or {}) do fn(...) end
     end
 
-    -- Hashing
-    -- Deterministic 32-bit FNV-1a so name->hash is stable within a test run.
-    -- Real joaat differs, but the modules only ever compare hash-to-hash, so any
-    -- consistent function is a faithful stand-in.
     function _G.joaat(str)
         local hash = 2166136261
         for i = 1, #str do
@@ -55,7 +50,6 @@ function M.install()
     end
     _G.GetHashKey = _G.joaat
 
-    -- Misc natives used by modules under test
     _G.__cancelled = false
     function _G.CancelEvent() _G.__cancelled = true end
 
@@ -65,7 +59,6 @@ function M.install()
     function _G.GetGamePool(_) return {} end
     function _G.SetPedDropsWeaponsWhenDead(_, _) end
 
-    -- Player / weapon natives (blacklist client, wantedlevel, healthregen).
     _G.__ped = 10
     _G.__selectedWeapon = 0
     _G.__removedWeapons = {}
@@ -77,9 +70,6 @@ function M.install()
     function _G.GetPlayers() return {} end
     function _G.GetPlayerPed(_) return 0 end
 
-    -- Movement-state natives used by crouch. These deliberately record the
-    -- active clipset/animation so its smoke test exercises transitions rather
-    -- than merely checking that callbacks did not error.
     _G.__movementClipset = nil
     _G.__strafeClipset = nil
     _G.__lastAnimation = nil
@@ -87,7 +77,7 @@ function M.install()
     _G.__gameTimer = 0
     _G.__heading = 0.0
     function _G.IsEntityDead(_) return false end
-    function _G.IsPedRagdoll(_) return false end
+    function _G.IsPedRagdoll(_) return _G.__ragdoll == true end
     function _G.IsPedFalling(_) return false end
     function _G.IsPedJumping(_) return false end
     function _G.IsPedClimbing(_) return false end
@@ -121,8 +111,6 @@ function M.install()
     function _G.GetGameTimer() return _G.__gameTimer end
     function _G.GetResourceState(_) return 'missing' end
 
-    -- Everything below is a no-op the scheduling/feature natives call; recorded
-    -- only where a test asserts on it.
     for _, name in ipairs({
         "SetMaxWantedLevel", "SetPoliceIgnorePlayer", "GetPlayerWantedLevel",
         "SetPlayerWantedLevel", "SetPlayerWantedLevelNow", "ClearPlayerWantedLevel", "HideHudComponentThisFrame", "EnableDispatchService",
@@ -136,15 +124,14 @@ function M.install()
         if _G[name] == nil then _G[name] = function() end end
     end
     function _G.DisablePlayerVehicleRewards(_) _G.__vehicleRewardDisables = _G.__vehicleRewardDisables + 1 end
-    -- GetPlayerWantedLevel needs a real return; default 0 (no level).
     _G.GetPlayerWantedLevel = function() return _G.__wantedLevel or 0 end
 
-    -- Minimal Kora.notify used by blacklist client.
     _G.Kora = _G.Kora or {}
     _G.Kora.cache = _G.Kora.cache or {}
     function _G.Kora.cache.ped() return _G.__ped end
     function _G.Kora.cache.playerId() return 0 end
     function _G.Kora.cache.weapon() return _G.__selectedWeapon end
+    function _G.Kora.cache.vehicle() return _G.__vehicle end
     function _G.Kora.cache.onChange(key, handler)
         cacheChangeHandlers[key] = cacheChangeHandlers[key] or {}
         table.insert(cacheChangeHandlers[key], handler)
@@ -184,7 +171,30 @@ function M.install()
             binding[phase == 'pressed' and 'onPressed' or 'onReleased']()
         end,
         control = function(control, pressed) _G.__controlsPressed[control] = pressed end,
-        advanceTime = function(ms) _G.__gameTimer = _G.__gameTimer + ms end,
+        ---Advance the game clock and run every SetTimeout that came due (including ones they schedule).
+        advanceTime = function(ms)
+            _G.__gameTimer = _G.__gameTimer + ms
+            local ran = true
+            while ran do
+                ran = false
+                for i, timer in ipairs(timers) do
+                    if timer.at <= _G.__gameTimer then
+                        table.remove(timers, i)
+                        timer.fn()
+                        ran = true
+                        break
+                    end
+                end
+            end
+        end,
+        pendingTimers = function() return #timers end,
+        ---Fire a state bag change for `key` on `bagName` into matching handlers.
+        stateBag = function(key, bagName, value)
+            if bagName == 'player:1' then _G.LocalPlayer.state[key] = value end
+            for _, handler in ipairs(stateBagHandlers) do
+                if handler.key == key then handler.fn(bagName, key, value, 0, true) end
+            end
+        end,
     }
 end
 

@@ -6,13 +6,16 @@ function GetInvokingResource() return owner end
 function AddEventHandler(name, fn) events[name]=fn end
 function exports(name, fn) provided[name]=fn end
 function DisableControlAction(group, control, disabled) calls[#calls+1]={group,control,disabled} end
-Small = { onFrame=function(fn) assert(not frame, 'one coordinator registration'); frame=fn end }
-Kora = {compat=dofile(root .. '../kora_lib/compat/provider.lua')()}
+local frameActive = false
+Small = { onFrame=function(fn) assert(not frame, 'one coordinator registration'); frame=fn; frameActive=true
+ return function(on) frameActive = on ~= false end end }
+Kora = {compat=dofile(dofile(root .. 'test/resource_path.lua')(root, 'kora_lib') .. 'compat/provider.lua')()}
 dofile(root .. 'client/compat.lua')
 local function legacy(name)
  local fn; events['__cfx_export_qb-smallresources_'..name](function(value) fn=value end); return fn
 end
 assert(legacy('addDisableControls')==provided.addDisableControls)
+assert(frame==nil, 'nothing scheduled until a control is disabled')
 assert(legacy('addDisableControls')({24,25})==nil); frame()
 assert(#calls==2 and calls[1][1]==2 and calls[1][2]==24 and calls[1][3]==true)
 legacy('removeDisableControls')(24);calls={};frame();assert(#calls==1 and calls[1][2]==25)
@@ -22,4 +25,6 @@ owner='other';provided.addDisableControls(75);events.onClientResourceStop('radia
 calls={};frame();assert(#calls==1 and calls[1][2]==75,'stopped owner controls cleaned')
 provided.addDisableControls({[2]=24});assert(#provided.getDisableControls()==1,'sparse arrays rejected')
 provided.removeDisableControls(75);calls={};frame();assert(#calls==0,'removed controls stop suppression')
-print('qbsmallresources legacy controls: 8 checks passed')
+assert(frameActive==false,'frame task paused once no controls remain')
+provided.addDisableControls(30);assert(frameActive==true,'adding a control resumes the frame task')
+print('qbsmallresources legacy controls: 10 checks passed')

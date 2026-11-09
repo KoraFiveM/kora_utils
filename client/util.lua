@@ -1,8 +1,3 @@
--- Small shared helpers used by more than one feature module. Kept tiny and
--- deterministic (kora_lib's convention) -- anything general enough to live in
--- kora_lib proper (Kora.*) should go there instead; this is only for glue specific
--- to this resource.
-
 Small = Small or {}
 
 ---Normalise a weapon/model identifier to its integer hash. Accepts a string

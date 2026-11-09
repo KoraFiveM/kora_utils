@@ -2,19 +2,14 @@ if not Config.seatbelt.enabled then return end
 
 local seatbelt, harness, harnessUses, busy = false, false, 0, false
 local harnessConfig = Config.seatbelt.harness or {}
--- The race harness is its own state: it never turns the belt on/off and the
--- belt key never touches it. false keeps the old coupled behaviour.
 local separateHarness = harnessConfig.separateFromSeatbelt ~= false
 local vehicle, velocity = nil, nil
 local nextSample, peakSpeed, previousBody, frameBodyChange, peakTicks, damageDone = 0, 0, 0, 0, 0, false
 
 local function announce()
-    -- Local presentation state only; never replicated as inventory authority.
     LocalPlayer.state:set('seatbelt', seatbelt, false)
     TriggerEvent('seatbelt:client:ToggleSeatbelt', seatbelt)
     TriggerEvent('hud:client:UpdateHarness', harnessUses)
-    -- harnessUses is 0 both with no harness and with a spent last-use harness,
-    -- so the HUD icon reads this attached flag (same local pattern as the belt).
     LocalPlayer.state:set('harness', harness, false)
     TriggerEvent('seatbelt:client:ToggleHarness', harness, harnessUses)
 end
@@ -46,8 +41,6 @@ local function changed(value)
         if setFrameActive then setFrameActive(true) end
     end
 end
--- onChange registrations die with kora_lib, so re-register and re-seed from the
--- current vehicle whenever it restarts (changed() ignores an unchanged vehicle).
 local function watchVehicle()
     Kora.cache.onChange('vehicle', changed)
     changed(Kora.cache.vehicle())
@@ -60,7 +53,6 @@ end)
 
 local function toggleSeatbelt()
     if not vehicle or IsPauseMenuActive() then return end
-    -- The last use consumes the item, so nothing is left to remove the harness with.
     if not separateHarness and Config.seatbelt.removeEmptyHarness and harness and harnessUses == 0 then
         TriggerServerEvent('qbsmallresources:server:removeHarness')
         return
@@ -93,15 +85,11 @@ end)
 RegisterNetEvent('seatbelt:client:UseHarness', function(item, token)
     if type(item) ~= 'table' then return end
     if busy or LocalPlayer.state.inv_busy or not vehicle then
-        -- Refused locally: drop the server's pending action now instead of
-        -- leaving it to block every harness use until it expires.
         if token ~= nil then TriggerServerEvent('qbsmallresources:server:cancelHarness', token) end
         return
     end
     busy = true
     local selected = vehicle
-    -- kora_inventory owns inv_busy and already blocks item use while any
-    -- progress bar runs; writing it here too could fight its own session state.
     local lockInventory = harnessConfig.lockInventory == true
     if lockInventory then LocalPlayer.state:set('inv_busy', true, true) end
     local ok, completed = pcall(Kora.progressbar.start, {
@@ -119,9 +107,6 @@ RegisterNetEvent('seatbelt:client:UseHarness', function(item, token)
     end
 end)
 
--- Key/command toggle. The server decides attach or remove: removing needs no
--- item (the last use may have consumed it), attaching finds a real harness
--- item server-side. Both then run the same progress flow as the item.
 local harnessCommand = harnessConfig.command
 if type(harnessCommand) == 'string' and harnessCommand ~= '' then
     local requesting = false
@@ -147,23 +132,19 @@ local function eject(ped)
     SetEntityHealth(ped, math.max(0, GetEntityHealth(ped) - math.ceil(GetEntitySpeed(ped) * 8)))
 end
 
--- Stock crash thresholds: a >25% speed drop from >110 km/h plus body damage;
--- ordinary belts retain stock high-speed ejection risk, harnesses absorb it.
--- Existing coordinator supplies the only frame worker; the task pauses itself
--- on foot and is resumed by `changed` on entering an allowed vehicle.
 setFrameActive = Small.onFrame(function()
     if not vehicle then
         if setFrameActive then setFrameActive(false) end
         return
     end
-    local ped = PlayerPedId()
-    if GetVehiclePedIsIn(ped, false) ~= vehicle or IsEntityDead(ped) then changed(nil); return end
     if seatbelt or harness then
         DisableControlAction(0, 75, true)
         DisableControlAction(27, 75, true)
     end
     local now = GetGameTimer()
     if now < nextSample then return end
+    local ped = Kora.cache.ped()
+    if GetVehiclePedIsIn(ped, false) ~= vehicle or IsEntityDead(ped) then changed(nil); return end
     local speed, body = GetEntitySpeed(vehicle) * 3.6, GetVehicleBodyHealth(vehicle)
     if body == 1000 and frameBodyChange ~= 0 then frameBodyChange = 0 end
     if frameBodyChange ~= 0 then
@@ -184,8 +165,6 @@ setFrameActive = Small.onFrame(function()
         end
     end
     if peakSpeed < 100 then nextSample = math.max(nextSample, now + 100); peakTicks = 0 end
-    -- Preserve upstream's 25-sample retained speed peak and delayed body delta;
-    -- a collision often decelerates over several frames before body damage arrives.
     frameBodyChange = previousBody - body
     if peakTicks > 0 then
         peakTicks = peakTicks - 1

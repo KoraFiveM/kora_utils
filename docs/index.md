@@ -46,7 +46,7 @@ concrete slices of it:
 -- config.lua
 Config.idleCamera = {
     disable = true,   -- true = the idle camera never engages
-    interval = 1000,  -- ms between InvalidateIdleCam calls
+    interval = 10000, -- ms between InvalidateIdleCam calls
 }
 
 Config.weaponWheel = {
@@ -60,9 +60,11 @@ Config.weaponWheel = {
 -- config.lua
 Config.wantedLevel = {
     disable = true,          -- wanted level forced to 0 and capped at 0
-    disableDispatch = true,  -- switch off NPC dispatch (cops, ambulance, fire, ...)
+    disablePolice = true,    -- switch off AI police dispatch (false = stock)
+    disableFire = true,      -- switch off AI fire department dispatch
+    disableAmbulance = true, -- switch off AI ambulance dispatch
     interval = 2000,         -- ms between belt-and-braces clears of any level that slipped through
-    hideHudStar = true,      -- hide the HUD wanted-star component every frame
+    hideHudStar = false,     -- true = hide the HUD wanted-star component every frame (off: stars never show at max level 0)
 }
 ```
 
@@ -145,11 +147,11 @@ via `Small.onFrame`); `SetWeaponsNoAutoswap(true)` (per-spawn, via
 `Small.onSpawn`, when `blockAutoSwap` is set).
 
 ### `wantedlevel` (client)
-`Config.wantedLevel` — `disable`, `disableDispatch`, `interval`, `hideHudStar`. Natives:
+`Config.wantedLevel` — `disable`, `disablePolice`, `disableFire`, `disableAmbulance`, `interval`, `hideHudStar`. Natives:
 `SetMaxWantedLevel(0)` on spawn; `HideHudComponentThisFrame(1)` every frame (when `hideHudStar`);
 `SetMaxWantedLevel(0)`, `SetPlayerWantedLevel`/`SetPlayerWantedLevelNow`/`ClearPlayerWantedLevel`
 clear (only when the level is above 0), and `EnableDispatchService(1..15, false)` (when
-`disableDispatch`) on `Config.wantedLevel.interval`.
+the dispatch toggles) on `Config.wantedLevel.interval`.
 
 ### `healthregen` (client)
 `Config.healthRegen` — `multiplier`, `limit`. Natives:

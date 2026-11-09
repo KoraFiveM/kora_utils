@@ -1,6 +1,3 @@
--- Smoke tests for the blacklist feature: client-side weapon stripping and
--- server-side spawn refusal. These are the only feature modules with branching
--- logic worth asserting (the rest are unconditional native calls).
 local scriptDir = debug.getinfo(1, "S").source:match("@?(.*/)") or "./"
 local testDir = scriptDir .. "../"
 local repoRoot = testDir .. "../"
@@ -11,7 +8,6 @@ local mocks = require("mocks")
 
 local handle = mocks.install()
 
--- The modules read a global Config; stand one up before loading them.
 Config = {
     blacklist = {
         weapons = { "WEAPON_RPG", "WEAPON_MINIGUN" },

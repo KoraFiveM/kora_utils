@@ -1,13 +1,19 @@
--- Legacy qb-smallresources presentation exports. Nothing is scheduled until a
--- caller changes a value, so an untouched server pays no per-frame cost.
 local hidden, owners = {}, {}
 local density, displayAmmo, ammoTouched = {}, true, false
-local scheduled = false
+local setFrameActive = nil
 
+-- Something needs reasserting this frame: hidden components, ammo display turned
+-- off, or a density override. Showing ammo is the game default, so it needs no frame.
+local function needsFrame()
+    return #hidden > 0 or (ammoTouched and not displayAmmo) or next(density) ~= nil
+end
+
+-- Registered on first use and paused whenever nothing needs reasserting, so a
+-- cleared override stops costing a per-frame resume.
 local function schedule()
-    if scheduled then return end
-    scheduled = true
-    Small.onFrame(function()
+    if setFrameActive then setFrameActive(needsFrame()); return end
+    if not needsFrame() then return end
+    setFrameActive = Small.onFrame(function()
         for index = 1, #hidden do HideHudComponentThisFrame(hidden[index]) end
         if ammoTouched then DisplayAmmoThisFrame(displayAmmo) end
         if density.parked then SetParkedVehicleDensityMultiplierThisFrame(density.parked) end
@@ -38,7 +44,7 @@ local function addDisableHudComponents(value)
         hidden[#hidden + 1] = id
         owners[#hidden] = owner
     end
-    if #hidden > 0 then schedule() end
+    schedule()
 end
 
 local function removeDisableHudComponents(value)
@@ -51,6 +57,7 @@ local function removeDisableHudComponents(value)
             end
         end
     end
+    schedule()
 end
 
 local function getDisableHudComponents()
@@ -77,7 +84,7 @@ end
 local function getDisplayAmmo() return displayAmmo end
 
 local function getHandsup()
-    return IsEntityPlayingAnim(PlayerPedId(), 'missminuteman_1ig_2', 'handsup_base', 3) == true
+    return IsEntityPlayingAnim(Kora.cache.ped(), 'missminuteman_1ig_2', 'handsup_base', 3) == true
 end
 
 for name, handler in pairs({ DecorSet = decorSet, addDisableHudComponents = addDisableHudComponents,
@@ -94,4 +101,5 @@ AddEventHandler('onClientResourceStop', function(resource)
             table.remove(owners, index)
         end
     end
+    schedule()
 end)

@@ -46,8 +46,6 @@ local function consumeUse(src, item, uses)
     return ok == true, info.uses
 end
 
--- `item` is a validated harness item, or nil for an item-less removal (the
--- key/command path); that action carries slot=false, which finish() matches.
 local function startAction(src, vehicle, item)
     sequence = sequence + 1
     local action = { token = tostring(sequence), slot = item and item.slot or false, vehicle = vehicle,
@@ -56,8 +54,6 @@ local function startAction(src, vehicle, item)
     SetTimeout(Config.seatbelt.actionLifetime, function()
         if pending[src] == action then pending[src] = nil end
     end)
-    -- Keep the legacy item argument. The extra token is used by this native
-    -- client; unchanged stock clients still complete through equip:harness.
     TriggerClientEvent('seatbelt:client:UseHarness', src, item or { name = 'harness', slot = false }, action.token)
 end
 
@@ -69,7 +65,6 @@ local function beginUse(src, supplied)
     startAction(src, vehicle, item)
 end
 
--- First valid harness the player owns, lowest slot first (durability rules as harnessItem).
 local function ownedHarness(src)
     local ok, list = pcall(function() return exports.kora_core:getItemsByName(src, 'harness') end)
     if not ok or type(list) ~= 'table' then return nil end
@@ -81,8 +76,6 @@ local function ownedHarness(src)
     return best
 end
 
--- Key/command toggle. Removing an attached harness needs no item, so a player
--- whose last use consumed it is never stuck; attaching needs a real item.
 local function toggle(src)
     if busy[src] or pending[src] then return 'busy' end
     local vehicle = currentVehicle(src)
@@ -115,8 +108,6 @@ local function finish(src, supplied, token)
     busy[src] = nil
     if not ok or not saved then return false end
     if currentVehicle(src) ~= action.vehicle then return false end
-    -- The last consumed item still provides the one equipped protection, as
-    -- stock does. Another crash removes that protection without inventing an item.
     equipped[src] = { slot = action.slot, uses = remaining, vehicle = action.vehicle,
         body = GetVehicleBodyHealth(action.vehicle), damagedAt = -Config.seatbelt.crashCooldown }
     publish(src)
@@ -141,8 +132,6 @@ RegisterNetEvent('qbsmallresources:server:removeHarness', function()
 end)
 RegisterNetEvent('qbsmallresources:server:leaveVehicle', function() clear(source) end)
 
--- Client hp/metadata are deliberately ignored. A report can only consume the
--- sender's equipped item after a new body-health loss on that same vehicle.
 RegisterNetEvent('seatbelt:DoHarnessDamage', function()
     local src, now = source, GetGameTimer()
     local state = equipped[src]

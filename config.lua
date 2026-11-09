@@ -1,94 +1,59 @@
--- kora_utils configuration.
---
--- One flat table, one section per feature, a trailing comment on every value --
--- matching kora_lib's config.lua style. Every feature is independently toggleable;
--- a feature turned off here registers NOTHING at runtime (no thread, no tick, no
--- event handler), so trimming this file to taste has a real performance payoff,
--- not just a cosmetic one. See each module's docs.md for the natives involved.
-
 Config = {}
 
--- ===========================================================================
--- Idle camera -- kill GTA's cinematic "idle" camera that swings away from the
--- player after ~30s of no input. This is the "anti idle" most servers want:
--- the passive camera drift, not an AFK kick (that's a server policy, left to
--- txAdmin / your admin resource).
--- ===========================================================================
 Config.idleCamera = {
-    disable = true,   -- true = the idle camera never engages
-    interval = 1000,  -- ms between InvalidateIdleCam calls; anything < 30000 prevents it, 1000 is cheap and safe
+    disable = true,
+    interval = 10000,
 }
 
--- ===========================================================================
--- Weapon wheel -- remove the radial weapon-select wheel entirely. Weapons are
--- still switchable by script/inventory; only the built-in HUD wheel is blocked.
--- ===========================================================================
 Config.weaponWheel = {
-    disable = true,      -- true = the weapon wheel never opens
-    blockAutoSwap = true, -- also stop the engine auto-equipping a newly picked-up weapon
+    disable = true,
+    blockAutoSwap = true,
 }
 
--- ===========================================================================
--- Vehicle rewards -- GTA can award a weapon when the player enters some
--- service vehicles, including police cars. Inventory-managed servers should
--- suppress that native reward so every weapon has an authoritative item source.
--- ===========================================================================
 Config.vehicleRewards = {
-    disable = true, -- true = prevent GTA from awarding weapons for entering service vehicles
+    disable = true,
 }
 
--- ===========================================================================
--- Wanted level -- never let the player accrue a vanilla NPC-police wanted
--- level (server RP jobs handle the law, not GTA's star system). Also silences
--- the NPC dispatch services (no auto-spawned cops/helis/swat).
--- ===========================================================================
 Config.wantedLevel = {
-    disable = true,          -- true = wanted level is forced to 0 and capped at 0
-    disableDispatch = true,  -- true = NPC dispatch services (cops, ambulance, fire, ...) are switched off
-    interval = 2000,         -- ms between re-applying the cap and clearing any level that slipped through (SetMaxWantedLevel(0) alone covers most, this is the belt-and-braces sweep)
-    hideHudStar = true,      -- true = also hide the HUD wanted-star component every frame (only runs while disable = true)
+    disable = true,
+    -- Toggles: true = that AI service is switched off, false = stock GTA behaviour.
+    disablePolice = true,    -- AI police (cars, helicopters, SWAT, roadblocks, boats, army, gangs, bikers)
+    disableFire = true,      -- AI fire department
+    disableAmbulance = true, -- AI ambulance / paramedics
+    interval = 2000,
+    hideHudStar = false,
 }
 
--- ===========================================================================
--- Health regen -- GTA slowly auto-heals the player back toward full. Zeroing
--- the multiplier makes damage stick until something (an item, a medic script)
--- heals it. multiplier = 1.0 restores stock behaviour.
--- ===========================================================================
 Config.healthRegen = {
-    multiplier = 0.0,  -- passive-regen rate multiplier; 0.0 = no passive healing at all
-    limit = 0.0,       -- HP ceiling the passive regen restores up to; 0.0 pairs with multiplier 0.0
+    multiplier = 0.0,
+    limit = 0.0,
 }
 
--- ===========================================================================
--- Crouch / prone -- replaces GTA's action-mode "crouch" (a combat stance)
--- with the actual crouched movement clipset. Tap the bind to toggle between
--- standing and crouching; hold it to lie prone. The binding is rebindable in
--- FiveM settings under "Toggle crouch / hold prone".
--- ===========================================================================
 Config.crouch = {
-    enabled = true,                         -- false = do not register the binding or any crouch work
-    keybind = 'LCONTROL',                   -- default keyboard binding; players may rebind it
-    holdDuration = 500,                     -- ms held before entering prone
-    crouchClipset = 'move_ped_crouched',    -- genuine crouched locomotion, not action/combat mode
+    enabled = true,
+    keybind = 'LCONTROL',
+    holdDuration = 500,
+    crouchClipset = 'move_ped_crouched',
     crouchStrafeClipset = 'move_ped_crouched_strafing',
-    proneAnimDict = 'move_crawl',           -- animation dictionary; this is not a movement clipset
+    proneAnimDict = 'move_crawl',
     proneForwardAnim = 'onfront_fwd',
     proneBackwardAnim = 'onfront_bwd',
-    proneTurnSpeed = 1.0,                   -- degrees per frame while turning
-    reassertInterval = 100,                 -- ms between re-applying the crouch clipsets while crouched (the engine drops them after ~10s idle); 0 = off
-    blockIdleClips = true,                  -- block the engine's ambient idle fidget while crouched (stops the stand-up/re-crouch loop after ~10s still)
-    blockStockDuck = true,                 -- always block GTA's own duck/stealth key while on foot (it fires a frame before the bind)
+    proneTurnSpeed = 1.0,
+    proneForwardKey = 'W',
+    proneBackwardKey = 'S',
+    proneLeftKey = 'A',
+    proneRightKey = 'D',
+    proneControllerSupport = true, -- read the stick in the prone frame task (sticks can't be key-mapped); false = keyboard mappings only
+    reassertInterval = 100,
+    blockIdleClips = true,
+    -- How GTA's own duck/stealth stance (control 36, also LCONTROL) is stopped:
+    --   'event' undo it when the crouch key is pressed, plus a 1500 ms check; no per-frame cost
+    --   'frame' disable control 36 every frame on foot (the old behaviour; use if 'event' flickers)
+    --   false   leave the stock duck alone
+    blockStockDuck = 'event',
 }
 
--- ===========================================================================
--- Blacklist / ignore -- things the player is simply never allowed to have or
--- do. Weapons are stripped client-side; vehicle spawns are refused
--- server-side (a client-only check is trivially bypassed).
--- ===========================================================================
 Config.blacklist = {
-    -- Weapons a player may never hold. If one becomes equipped anyway (menu,
-    -- cheat, a buggy give), it's removed and -- if notify is set -- the player
-    -- is told. Names (readable) or raw hashes both work.
     weapons = {
         'WEAPON_RAILGUN',
         'WEAPON_RPG',
@@ -100,41 +65,28 @@ Config.blacklist = {
         'WEAPON_STINGER',
     },
     serverWeaponSweepInterval = 250,
-    notifyOnStrip = true,       -- Kora.notify the player when a blacklisted weapon is taken away
+    notifyOnStrip = true,
 
-    -- Vehicle models a player may not spawn. Enforced SERVER-side (via OneSync's
-    -- entityCreating) so a client can't just skip the check. Names or hashes.
     vehicles = {
         'rhino', 'lazer', 'hydra', 'savage', 'buzzard',
         'oppressor', 'oppressor2', 'scramjet', 'deluxo', 'insurgent',
         'blimp', 'blimp2', 'blimp3',
     },
 
-    notifyOnVehicleBlock = true, -- Kora.notify the player when their blacklisted vehicle spawn is refused
+    notifyOnVehicleBlock = true,
 
-    -- Ped models a player may not spawn (cop/military models used for griefing).
-    -- Same server-side entityCreating enforcement as vehicles.
     peds = {
-        -- 's_m_y_cop_01', 's_m_y_sheriff_01', 's_m_y_ranger_01',
     },
 }
 
--- ===========================================================================
--- World de-population -- thin out GTA's ambient chaos: no random NPC police,
--- no distant cop sirens, garbage trucks, or far-drawn traffic, and dead NPCs
--- stop dropping their weapons on the ground (a common source of players
--- picking up blacklisted guns). Purely cosmetic/ambient; toggle freely.
--- ===========================================================================
 Config.worldDepop = {
-    disableRandomCops = true,  -- no ambient NPC police spawns / distant sirens
-    disablePedDrops = true,    -- NPCs killed nearby don't drop their weapon on the ground
-    calmNpcs = true,           -- ambient gangs/cops/medics won't turn hostile to players on sight
-    disableDriveby = false,    -- true = players can't fire from inside a vehicle
-    reassertInterval = 10000,  -- ms; some population natives get reset by the engine, so reassert periodically
+    disableRandomCops = true,
+    disablePedDrops = true,
+    calmNpcs = true,
+    disableDriveby = false,
+    reassertInterval = 10000,
 }
 
--- Legacy seatbelt/harness lifecycle. Durability and equipped ownership are
--- checked server-side; the client owns local driving physics and controls.
 Config.HarnessUses = 20
 Config.seatbelt = {
     enabled = true,
@@ -142,26 +94,13 @@ Config.seatbelt = {
     equipDuration = 5000,
     actionLifetime = 30000,
     crashCooldown = 1000,
-    removeEmptyHarness = true, -- true = the seatbelt key removes a harness whose last use was consumed (no item left to remove it with). Only used while harness.separateFromSeatbelt is false
+    removeEmptyHarness = true,
     harness = {
-        -- true = the race harness is its own thing: attaching/removing it never
-        -- changes the seatbelt, the seatbelt key never touches the harness, and an
-        -- attached harness alone blocks exiting (F). false = old behaviour (the
-        -- harness turns the seatbelt on/off with it).
         separateFromSeatbelt = true,
-        -- Chat command (and the key mapping below) that attaches/removes the
-        -- harness while seated in a vehicle. Attaching needs a harness item,
-        -- removing does not. false or '' = no command and no key mapping.
         command = 'raceharness',
-        -- Default key for "Toggle race harness" in Settings > Key Bindings > FiveM.
-        -- '' = unbound; each player picks their own key there.
         keybind = '',
-        -- true = old behaviour: the harness progress bar also writes the
-        -- inv_busy state bag itself. kora_inventory owns that bag and already
-        -- blocks item use while any progress bar runs, so leave this false.
         lockInventory = false,
     },
 }
 
--- Registers this resource-owned configuration with kora_lib without changing its public Config table.
 if Kora and Kora.config and Kora.config.adopt then Config = Kora.config.adopt(Config) end

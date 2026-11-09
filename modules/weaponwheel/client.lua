@@ -7,8 +7,9 @@ if Config.weaponWheel.blockAutoSwap then
 end
 
 local function disableWeaponWheel()
-    SetPedConfigFlag(Kora.cache.ped(), 48, true) -- Disable weapon wheel
+    SetPedConfigFlag(Kora.cache.ped(), 48, true)
 end
 
 disableWeaponWheel()
-Small.onInterval(2000, disableWeaponWheel)
+Small.onSpawn(disableWeaponWheel)
+Small.onInterval(10000, disableWeaponWheel)

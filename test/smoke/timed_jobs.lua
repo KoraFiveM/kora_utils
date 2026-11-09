@@ -7,7 +7,7 @@ function AddEventHandler(name, fn) events[name]=fn end
 function exports(name, fn) provided[name]=fn end
 function CreateThread(fn) assert(not thread, 'one loop only'); thread=coroutine.create(fn); coroutine.resume(thread) end
 function Wait(ms) waits[#waits+1]=ms; coroutine.yield() end
-Kora = {compat=dofile(root .. '../kora_lib/compat/provider.lua')()}
+Kora = {compat=dofile(dofile(root .. 'test/resource_path.lua')(root, 'kora_lib') .. 'compat/provider.lua')()}
 dofile(root .. 'server/timedjobs.lua')
 local function legacy(name)
  local fn; events['__cfx_export_qb-smallresources_'..name](function(value) fn=value end); return fn

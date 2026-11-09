@@ -1,5 +1,3 @@
--- Legacy qb-smallresources timed jobs. Server only, so there is no network
--- entry point: only another server resource can create or run one.
 local jobs, nextId, running = {}, 0, false
 
 local function clock()

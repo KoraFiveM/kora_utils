@@ -1,9 +1,9 @@
 local root = (debug.getinfo(1, 'S').source:match('@?(.*/)') or './') .. '../../'
 local tasks, calls, frames, starHides = {}, {}, {}, 0
 local ped = 42
-Kora = { cache = { ped = function() return ped end } }
+Kora = { cache = { ped = function() return ped end, playerId = function() return 0 end } }
 Small = { onInterval = function(interval, fn)
-    assert(interval == 2000)
+    assert(interval == 2000 or interval == 10000 or interval == 30000)
     tasks[#tasks + 1] = fn
 end, onSpawn = function(fn) tasks[#tasks + 1] = fn end,
     onFrame = function(fn) frames[#frames + 1] = fn end }
@@ -29,7 +29,13 @@ assert(#tasks == 0 and #calls == 0 and #frames == 0, 'disabled features must do 
 Config.wantedLevel.disable, Config.weaponWheel.disable = true, true
 dofile(root .. 'modules/wantedlevel/client.lua')
 dofile(root .. 'modules/weaponwheel/client.lua')
-assert(#tasks == 3 and #calls == 2, 'enabled flags apply immediately; wanted level also reapplies on spawn')
+assert(#frames == 0, 'no per-frame work unless hideHudStar is explicitly enabled')
+assert(#calls == 2, 'enabled flags apply immediately')
+tasks, calls, wanted.max, wanted.set, wanted.cleared, wanted.level = {}, {}, 0, 0, 0, 3
+Config.wantedLevel.hideHudStar = true
+dofile(root .. 'modules/wantedlevel/client.lua')
+dofile(root .. 'modules/weaponwheel/client.lua')
+assert(#tasks == 5 and #calls == 2, 'flags apply immediately and reapply on spawn / safety-net intervals')
 assert(wanted.max == 1 and wanted.set == 1 and wanted.cleared == 1, 'a leaked wanted level is capped and cleared')
 assert(calls[1][2] == 42 and calls[2][2] == 48)
 assert(#frames == 1, 'wanted star hide shares the coordinator frame thread')
@@ -37,6 +43,6 @@ frames[1]()
 assert(starHides == 1, 'frame task hides the wanted star component')
 ped = 99
 for _, task in ipairs(tasks) do task() end
-assert(#calls == 4 and calls[3][1] == 99 and calls[4][1] == 99, 'ticks must read the current ped')
-assert(calls[3][3] == true and calls[4][3] == true)
+assert(#calls > 2, 'spawn and safety-net ticks reapply the ped flags')
+for i = 3, #calls do assert(calls[i][1] == 99 and calls[i][3] == true, 'ticks must read the current ped') end
 print('PASS ped flags: disabled, initial application, interval and ped replacement')

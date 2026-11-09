@@ -55,6 +55,14 @@ Config.vehicleRewards.disable = true    -- stop GTA police-car weapon rewards
 Config.wantedLevel.disable  = true      -- suppress the NPC wanted level
 Config.healthRegen.multiplier = 0.0     -- 0.0 = no passive healing; 1.0 = stock
 Config.crouch.keybind         = 'LCONTROL' -- tap = crouch toggle; hold = prone
+Config.crouch.proneForwardKey  = 'W'  -- prone movement: rebindable key mappings (default keys only;
+Config.crouch.proneBackwardKey = 'S'  -- players rebind them in FiveM settings). Controller stick
+Config.crouch.proneLeftKey     = 'A'  -- movement is not mapped.
+Config.crouch.proneRightKey    = 'D'
+Config.crouch.proneControllerSupport = true -- stick is read in the prone frame task (sticks can't be key-mapped)
+Config.crouch.blockStockDuck  = 'event' -- GTA's own duck/stealth: 'event' undoes it on the crouch key press
+                                        -- (+1500 ms check, no frame cost); 'frame' disables control 36
+                                        -- every frame on foot; false leaves it alone
 Config.blacklist.weapons    = { 'WEAPON_RAILGUN', ... }   -- stripped client-side
 Config.blacklist.vehicles   = { 'rhino', 'lazer', ... }   -- refused server-side
 Config.worldDepop.disableRandomCops = true
@@ -86,7 +94,8 @@ each spawning its own loop:
   Reserved for natives that genuinely must be reasserted each frame
   (`BlockWeaponWheelThisFrame`, disabling a control).
   Returns `setActive(bool)` so a conditional task (seatbelt on foot) can pause
-  itself; with no active task the thread idles at a 100 ms poll.
+  itself; when no task is active the thread exits (zero cost) and the next
+  `setActive(true)` starts it again.
 - `Small.onInterval(ms, fn)` — one thread per **distinct** interval, shared by
   every feature that asked for that cadence. The default home for
   reassert-occasionally work (clearing the wanted level, sweeping for

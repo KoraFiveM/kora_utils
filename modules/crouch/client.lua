@@ -1,11 +1,27 @@
--- crouch -- a real crouched locomotion state, with hold-to-prone. GTA's
--- built-in INPUT_DUCK toggles action mode, which is a fighting stance rather
--- than a crouch. This module owns that control and substitutes the proper
--- movement clipsets instead.
-
 if not Config.crouch.enabled then return end
 
+-- Prone movement is read from key mappings; controller sticks are read from the prone
+-- frame task only (config.proneControllerSupport).
+-- Loop budget for this module:
+--   standing         no frame work. GTA's own duck (stealth) is undone when the crouch key is
+--                    pressed, plus a 1500 ms stealth check as a backstop ('event' mode). The
+--                    'frame' mode instead disables control 36 every frame on foot.
+--   crouched         one SetTimeout chain at config.reassertInterval (no thread, no Wait)
+--   prone            the same chain, plus a frame task on the shared frame thread that only
+--                    disables sprint/jump and applies turning while A/D are held
+-- Prone movement keys are key mappings (press/release events), not IsControlPressed polling.
+-- Emotes are detected from the replicated state bag, not read every frame.
+
 local config = Config.crouch
+-- blockStockDuck: 'event' (default; `true`/nil mean the same), 'frame', or false.
+local stockDuckMode = config.blockStockDuck
+if stockDuckMode == true or stockDuckMode == nil then stockDuckMode = 'event' end
+if stockDuckMode ~= false and stockDuckMode ~= 'frame' then stockDuckMode = 'event' end
+-- true when the stock duck is handled module-wide (either mode), so stance changes
+-- need no frame task of their own for it.
+local blockStock = stockDuckMode ~= false
+local EMOTE_KEY = 'qbemotemenu:active'
+
 local stance = 'standing'
 local keyHeld = false
 local pressId = 0
@@ -14,15 +30,28 @@ local loadedClipsets = {}
 local proneAnimationLoaded = false
 local proneMotion = nil
 local proneStepEndsAt = 0
-local nextReassertAt = 0
 local idleBlocked = false
-local frameWatcherActive = false
-local watcherId = 0
+local emoteActive = false
+local tickId = 0
+local stepToken = 0
+
+-- Physical state of the prone movement keys, kept current by the key mappings below.
+local moveKeys = { forward = false, backward = false, left = false, right = false }
+
+-- Controller sticks cannot be bound with RegisterKeyMapping (PAD_ANALOGBUTTON is
+-- triggers only), so they are read from the prone frame task, which already runs
+-- every frame while prone. Nothing is polled outside prone.
+local padSupport = config.proneControllerSupport ~= false
+local padKeys = { forward = false, backward = false }
 
 local proneStepDuration = {
     forward = 820,
     backward = 990,
 }
+
+local function refreshEmote()
+    emoteActive = (LocalPlayer and LocalPlayer.state and LocalPlayer.state[EMOTE_KEY]) and true or false
+end
 
 local function canChangeStance(ped)
     return DoesEntityExist(ped)
@@ -33,105 +62,124 @@ local function canChangeStance(ped)
         and not IsPedClimbing(ped)
         and not IsPedSwimming(ped)
         and not IsPedInAnyVehicle(ped, false)
-        and not (LocalPlayer and LocalPlayer.state and LocalPlayer.state['qbemotemenu:active'])
+        and not emoteActive
 end
 
--- GTA's INPUT_DUCK toggles stealth movement (and action mode) on the press
--- frame, before the keybind callback runs. Stealth's idle fights the crouch
--- clipset, so clear both whenever we set a stance.
 local function clearStockStance(ped)
     SetPedUsingActionMode(ped, false, -1, 0)
     if GetPedStealthMovement(ped) then SetPedStealthMovement(ped, false, 'DEFAULT_ACTION') end
 end
 
--- Forward declared: stand() stops the frame watcher, and the watcher itself
--- can call stand() when canChangeStance fails mid-loop. playProneIdle/
--- playProneStep are used inside the watcher but defined below it.
-local stand, playProneIdle, playProneStep
+local stand, playProneIdle, playProneStep, syncProne
 
-local function stopFrameWatcher()
-    frameWatcherActive = false
+-- Per-frame work. Only registered while something genuinely needs a frame:
+-- prone (sprint/jump must be disabled every frame, and A/D turn the ped), or a
+-- held/active stance when the stock duck is not already blocked globally.
+local setFrameActive = Small.onFrame(function()
+    if not blockStock then DisableControlAction(0, 36, true) end
+    if stance ~= 'prone' then return end
+
+    DisableControlAction(0, 21, true)
+    DisableControlAction(0, 22, true)
+
+    local padLeft, padRight = false, false
+    if padSupport then
+        local forward = IsControlPressed(0, 32)
+        local backward = IsControlPressed(0, 33)
+        if forward ~= padKeys.forward or backward ~= padKeys.backward then
+            padKeys.forward, padKeys.backward = forward, backward
+            syncProne()
+        end
+        padLeft = IsControlPressed(0, 34)
+        padRight = IsControlPressed(0, 35)
+    end
+
+    if moveKeys.left or padLeft then
+        local ped = PlayerPedId()
+        SetEntityHeading(ped, GetEntityHeading(ped) + config.proneTurnSpeed)
+    elseif moveKeys.right or padRight then
+        local ped = PlayerPedId()
+        SetEntityHeading(ped, GetEntityHeading(ped) - config.proneTurnSpeed)
+    end
+end)
+setFrameActive(false)
+
+local function refreshFrame()
+    setFrameActive(stance == 'prone' or (not blockStock and (stance ~= 'standing' or keyHeld)))
 end
 
-local function startFrameWatcher()
-    if frameWatcherActive then return end
-    frameWatcherActive = true
-    watcherId = watcherId + 1
-    local myId = watcherId
+-- Interrupt / reassert tick: a SetTimeout chain that exists only while crouched
+-- or prone. Ragdoll, falling, swimming, climbing, death and vehicles have no
+-- event to hook, so they are checked here, off the frame path.
+local function tickPeriod()
+    local interval = config.reassertInterval or 0
+    return interval > 0 and interval or 250
+end
 
-    CreateThread(function()
-        while frameWatcherActive and watcherId == myId do
-            -- INPUT_DUCK (36) is the stock action/fighting stance. It must be
-            -- disabled every frame the watcher is running so the keybind
-            -- never leaves the player in that stance.
-            DisableControlAction(0, 36, true)
+local function stopTick()
+    tickId = tickId + 1
+end
 
-            if stance ~= 'standing' then
-                local ped = PlayerPedId()
-                if not canChangeStance(ped) then
-                    stand(ped)
-                else
-                    clearStockStance(ped)
-                    if stance == 'crouched' and (config.reassertInterval or 0) > 0 then
-                        -- After a few idle seconds the engine drops the override
-                        -- clipsets and the ped stands up. Re-apply them (a no-op
-                        -- while they are still set) so the crouch is held.
-                        local now = GetGameTimer()
-                        if now >= nextReassertAt then
-                            nextReassertAt = now + config.reassertInterval
-                            SetPedMovementClipset(ped, config.crouchClipset, 0.25)
-                            SetPedStrafeClipset(ped, config.crouchStrafeClipset)
-                            if idleBlocked then SetPedCanPlayAmbientIdles(ped, true, true) end
-                        end
-                    elseif stance == 'prone' then
-                        DisableControlAction(0, 21, true) -- INPUT_SPRINT
-                        DisableControlAction(0, 22, true) -- INPUT_JUMP
+local function startTick()
+    tickId = tickId + 1
+    local myId = tickId
 
-                        local forward = IsControlPressed(0, 32) -- INPUT_MOVE_UP_ONLY
-                        local backward = IsControlPressed(0, 33) -- INPUT_MOVE_DOWN_ONLY
-                        local now = GetGameTimer()
+    local function tick()
+        if tickId ~= myId or stance == 'standing' then return end
 
-                        if forward then
-                            if proneMotion ~= 'forward' or now >= proneStepEndsAt then
-                                playProneStep(ped, 'forward', now)
-                            end
-                        elseif backward then
-                            if proneMotion ~= 'backward' or now >= proneStepEndsAt then
-                                playProneStep(ped, 'backward', now)
-                            end
-                        elseif proneMotion ~= 'idle' then
-                            local clip = proneMotion == 'backward' and config.proneBackwardAnim or config.proneForwardAnim
-                            playProneIdle(ped, clip)
-                        end
-
-                        if IsControlPressed(0, 34) then -- INPUT_MOVE_LEFT_ONLY
-                            SetEntityHeading(ped, GetEntityHeading(ped) + config.proneTurnSpeed)
-                        elseif IsControlPressed(0, 35) then -- INPUT_MOVE_RIGHT_ONLY
-                            SetEntityHeading(ped, GetEntityHeading(ped) - config.proneTurnSpeed)
-                        end
-                    end
-                end
-            end
-
-            -- Started on key press only to swallow the stock duck; nothing left
-            -- to watch once the key is up and we are standing.
-            if stance == 'standing' and not keyHeld then
-                if watcherId == myId then frameWatcherActive = false end
-                return
-            end
-
-            Wait(0)
+        local ped = PlayerPedId()
+        if not canChangeStance(ped) then
+            stand(ped)
+            return
         end
-    end)
+
+        clearStockStance(ped)
+        if stance == 'crouched' and (config.reassertInterval or 0) > 0 then
+            SetPedMovementClipset(ped, config.crouchClipset, 0.25)
+            SetPedStrafeClipset(ped, config.crouchStrafeClipset)
+            if idleBlocked then SetPedCanPlayAmbientIdles(ped, true, true) end
+        end
+
+        SetTimeout(tickPeriod(), tick)
+    end
+
+    SetTimeout(tickPeriod(), tick)
+end
+
+-- Applies the current forward/backward key state to the prone animation. Called
+-- on key press/release and by its own step timer; never polls.
+syncProne = function()
+    if stance ~= 'prone' then return end
+
+    stepToken = stepToken + 1
+    local ped = PlayerPedId()
+    local direction = ((moveKeys.forward or padKeys.forward) and 'forward')
+        or ((moveKeys.backward or padKeys.backward) and 'backward')
+        or nil
+
+    if direction then
+        local now = GetGameTimer()
+        if proneMotion ~= direction or now >= proneStepEndsAt then
+            playProneStep(ped, direction, now)
+        end
+
+        -- Step clips hold their last frame, so replay when the step ends while
+        -- the key is still down. The token drops this timer if anything else
+        -- (a key change, standing up) syncs first.
+        local token = stepToken
+        SetTimeout(math.max(proneStepEndsAt - GetGameTimer(), 1), function()
+            if token == stepToken then syncProne() end
+        end)
+    elseif proneMotion ~= 'idle' then
+        local clip = proneMotion == 'backward' and config.proneBackwardAnim or config.proneForwardAnim
+        playProneIdle(ped, clip)
+    end
 end
 
 local function restoreWalkStyle(ped)
     ResetPedMovementClipset(ped, 0.25)
     ResetPedStrafeClipset(ped)
 
-    -- kora_emotemenu owns an optional player walk style. Restore it after we
-    -- release our temporary movement clipset instead of silently resetting it
-    -- to GTA's default walk.
     local savedWalk = LocalPlayer and LocalPlayer.state and LocalPlayer.state['qbemotemenu:walk']
     if savedWalk and GetResourceState('kora_emotemenu') == 'started' then
         pcall(function() exports.kora_emotemenu:setWalk(savedWalk, true) end)
@@ -156,7 +204,6 @@ end
 stand = function(ped)
     if stance == 'prone' then stopProneAnimation(ped) end
     restoreWalkStyle(ped)
-    stopFrameWatcher()
     clearStockStance(ped)
     if idleBlocked then
         SetPedCanPlayAmbientIdles(ped, false, false)
@@ -164,6 +211,10 @@ stand = function(ped)
     end
     releaseAssets()
     stance = 'standing'
+    stepToken = stepToken + 1
+    padKeys.forward, padKeys.backward = false, false
+    stopTick()
+    refreshFrame()
 end
 
 local function loadClipset(name)
@@ -173,6 +224,7 @@ local function loadClipset(name)
 end
 
 local function crouch(ped)
+    refreshEmote()
     if not canChangeStance(ped)
         or not loadClipset(config.crouchClipset)
         or not loadClipset(config.crouchStrafeClipset) then
@@ -184,28 +236,23 @@ local function crouch(ped)
     SetPedMovementClipset(ped, config.crouchClipset, 0.25)
     SetPedStrafeClipset(ped, config.crouchStrafeClipset)
     if config.blockIdleClips ~= false then
-        -- The engine's standing-idle fidget (after ~10s still) can play a
-        -- stand-up and re-crouch. Block ambient idles while crouched.
         SetPedCanPlayAmbientIdles(ped, true, true)
         idleBlocked = true
     end
     stance = 'crouched'
-    nextReassertAt = GetGameTimer() + (config.reassertInterval or 0)
-    startFrameWatcher()
+    startTick()
+    refreshFrame()
     return true
 end
 
 local function prone(ped)
+    refreshEmote()
     if not canChangeStance(ped) then return false end
     local dict = Kora.stream.loadAnimDict(config.proneAnimDict)
     if dict == false then return false end
     proneAnimationLoaded = true
 
     clearStockStance(ped)
-    -- `move_crawl` is an animation dictionary, not a movement clipset. Passing
-    -- it to SetPedMovementClipset leaves the skeleton without valid locomotion
-    -- clips and produces a T-pose. Clear any crouch clipsets, then hold the end
-    -- of a real crawl animation as the prone idle pose.
     ResetPedMovementClipset(ped, 0.25)
     ResetPedStrafeClipset(ped)
     local coords = GetEntityCoords(ped)
@@ -215,7 +262,10 @@ local function prone(ped)
     proneMotion = 'idle'
     proneStepEndsAt = 0
     stance = 'prone'
-    startFrameWatcher()
+    startTick()
+    refreshFrame()
+    -- A movement key may already be held when prone starts.
+    syncProne()
     return true
 end
 
@@ -235,6 +285,28 @@ playProneStep = function(ped, direction, now)
     proneStepEndsAt = now + proneStepDuration[direction]
 end
 
+local function inVehicle()
+    -- Kora.cache.vehicle() is `false` on foot (not nil or 0), so test truthiness.
+    local vehicle = Kora.cache.vehicle()
+    return vehicle ~= nil and vehicle ~= false and vehicle ~= 0
+end
+
+local function clearStealth()
+    if inVehicle() then return end
+    local ped = PlayerPedId()
+    if GetPedStealthMovement(ped) then clearStockStance(ped) end
+end
+
+-- 'event' mode: the crouch key is normally the same key as GTA's own duck
+-- (INPUT_DUCK, LCONTROL), so its press is exactly when the stock stealth stance
+-- can start. Undo it on the press and a couple of times shortly after (the game
+-- may apply it a frame or two later) instead of disabling control 36 every frame.
+local STOCK_DUCK_RECHECKS = { 0, 50, 150 }
+local function suppressStockDuck()
+    if stockDuckMode ~= 'event' then return end
+    for i = 1, #STOCK_DUCK_RECHECKS do SetTimeout(STOCK_DUCK_RECHECKS[i], clearStealth) end
+end
+
 local function toggleCrouch()
     local ped = PlayerPedId()
     if stance == 'crouched' or stance == 'prone' then
@@ -251,9 +323,8 @@ Kora.keybind.add({
     onPressed = function()
         if keyHeld then return end
         keyHeld = true
-        -- The stock INPUT_DUCK fires on the press itself; block it from this
-        -- frame on, not only once the crouch is applied on release.
-        startFrameWatcher()
+        suppressStockDuck()
+        refreshFrame()
         pressId = pressId + 1
         local currentPress = pressId
 
@@ -265,6 +336,7 @@ Kora.keybind.add({
     end,
     onReleased = function()
         keyHeld = false
+        refreshFrame()
         if heldPressId == pressId then
             heldPressId = nil
             return
@@ -273,31 +345,79 @@ Kora.keybind.add({
     end,
 })
 
--- The watcher above only starts after the keybind fires, a frame after the
--- stock duck already toggled stealth. Block INPUT_DUCK every frame on foot so
--- a tap can never reach GTA's own stance; paused while in a vehicle.
-if config.blockStockDuck ~= false then
+-- Prone movement: rebindable press/release mappings instead of IsControlPressed
+-- polling. Forward/backward drive the crawl animation directly; left/right only
+-- set a flag the prone frame task reads.
+for _, bind in ipairs({
+    { dir = 'forward',  key = config.proneForwardKey  or 'W', label = 'Prone: crawl forward' },
+    { dir = 'backward', key = config.proneBackwardKey or 'S', label = 'Prone: crawl backward' },
+    { dir = 'left',     key = config.proneLeftKey     or 'A', label = 'Prone: turn left' },
+    { dir = 'right',    key = config.proneRightKey    or 'D', label = 'Prone: turn right' },
+}) do
+    local dir = bind.dir
+    local drivesAnimation = dir == 'forward' or dir == 'backward'
+
+    Kora.keybind.add({
+        name = 'qbsmallresources_prone_' .. dir,
+        description = bind.label,
+        defaultKey = bind.key,
+        onPressed = function()
+            moveKeys[dir] = true
+            if drivesAnimation then syncProne() end
+        end,
+        onReleased = function()
+            moveKeys[dir] = false
+            if drivesAnimation then syncProne() end
+        end,
+    })
+end
+
+-- An emote takes over the ped: stand up the moment it starts instead of
+-- noticing on the next poll. The flag also replaces a per-frame statebag read.
+AddStateBagChangeHandler(EMOTE_KEY, nil, function(bagName, _, value)
+    if bagName ~= ('player:%d'):format(GetPlayerServerId(PlayerId())) then return end
+    emoteActive = value and true or false
+    if emoteActive and stance ~= 'standing' then stand(PlayerPedId()) end
+end)
+
+if stockDuckMode == 'frame' then
     local setBlocking = Small.onFrame(function()
         DisableControlAction(0, 36, true)
-        if stance ~= 'standing' then return end
-        local ped = PlayerPedId()
-        if GetPedStealthMovement(ped) then clearStockStance(ped) end
     end)
-    Small.onInterval(500, function()
-        setBlocking(not IsPedInAnyVehicle(PlayerPedId(), false))
+
+    local function vehicleChanged()
+        setBlocking(not inVehicle())
+    end
+    local function watchVehicle()
+        Kora.cache.onChange('vehicle', vehicleChanged)
+        vehicleChanged()
+    end
+    watchVehicle()
+    AddEventHandler('onClientResourceStart', function(resource)
+        if resource == 'kora_lib' then watchVehicle() end
+    end)
+end
+
+if blockStock then
+    -- Backstop for stealth that did not come from the crouch key (e.g. the crouch
+    -- key was rebound away from LCONTROL). Tighter in 'event' mode since nothing
+    -- blocks the control itself there.
+    Small.onInterval(stockDuckMode == 'event' and 1500 or 2000, function()
+        if stance ~= 'standing' then return end
+        clearStealth()
     end)
 end
 
 Small.onSpawn(function()
-    -- A respawn creates a new ped with stock movement. Forget the old ped's
-    -- state so a held/released key cannot apply a stale stance to the new one,
-    -- and stop the watcher so it isn't left running against the new ped.
     stance = 'standing'
     idleBlocked = false
     keyHeld = false
     heldPressId = nil
-    stopFrameWatcher()
+    stepToken = stepToken + 1
+    padKeys.forward, padKeys.backward = false, false
+    stopTick()
     releaseAssets()
+    refreshFrame()
 end)
 
 AddEventHandler('onClientResourceStop', function(resource)

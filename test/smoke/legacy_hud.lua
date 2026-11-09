@@ -15,8 +15,10 @@ function SetVehicleDensityMultiplierThisFrame(v) density.vehicle=v end
 function SetRandomVehicleDensityMultiplierThisFrame(v) density.multiplier=v end
 function SetPedDensityMultiplierThisFrame(v) density.peds=v end
 function SetScenarioPedDensityMultiplierThisFrame(a, b) density.scenario={a,b} end
-Small = { onFrame=function(fn) scheduledFrames=scheduledFrames+1; frame=fn end }
-Kora = {compat=dofile(root .. '../kora_lib/compat/provider.lua')()}
+local frameActive = false
+Small = { onFrame=function(fn) scheduledFrames=scheduledFrames+1; frame=fn; frameActive=true
+ return function(on) frameActive = on ~= false end end }
+Kora = {compat=dofile(dofile(root .. 'test/resource_path.lua')(root, 'kora_lib') .. 'compat/provider.lua')(), cache={ped=function() return 1 end}}
 dofile(root .. 'client/hud.lua')
 local function legacy(name)
  local fn; events['__cfx_export_qb-smallresources_'..name](function(value) fn=value end); return fn
@@ -38,5 +40,10 @@ frame(); assert(density.peds==0.2 and density.scenario[2]==0.1 and density.vehic
 assert(scheduledFrames==1, 'single shared frame task')
 owner='other'; provided.addDisableHudComponents(9); events.onClientResourceStop('other')
 hidden={}; frame(); assert(#hidden==1 and hidden[1]==2, 'stopped owner components removed')
+provided.removeDisableHudComponents({2}); assert(frameActive==true, 'ammo/density overrides keep the frame task')
+provided.DecorSet('peds', nil); provided.DecorSet('scenario', nil); assert(frameActive==true, 'ammo still hidden')
+provided.setDisplayAmmo(true); assert(frameActive==false, 'nothing to reassert: frame task paused')
+provided.addDisableHudComponents(3); assert(frameActive==true and scheduledFrames==1, 'resumes without a second registration')
+provided.removeDisableHudComponents(3); assert(frameActive==false)
 assert(provided.getHandsup()==false); anim=true; assert(provided.getHandsup()==true)
 print('qbsmallresources legacy hud: all checks passed')

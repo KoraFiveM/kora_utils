@@ -1,35 +1,21 @@
-if not Config.wantedLevel.disable then return end
+-- GTA dispatch service ids (EnableDispatchService). Each toggle in
+-- Config.wantedLevel switches a group of them off; false leaves that group at stock behaviour.
+local groups = {
+    disablePolice = { 1, 2, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 }, -- police cars/heli/swat/riders/roadblocks/boats/army/gangs/bikers
+    disableFire = { 3 },                                             -- fire department
+    disableAmbulance = { 5 },                                        -- ambulance department
+}
 
-local function capWantedLevel()
+local cfg = Config.wantedLevel or {}
+
+CreateThread(function()
     SetMaxWantedLevel(0)
 
-    local id = PlayerId()
-    if GetPlayerWantedLevel(id) > 0 then
-        SetPlayerWantedLevel(id, 0, false)
-        SetPlayerWantedLevelNow(id, false)
-        ClearPlayerWantedLevel(id)
-    end
-end
-
-local function disableWantedLevel()
-    SetPedConfigFlag(Kora.cache.ped(), 42, true) -- Disable wanted level increase
-    capWantedLevel()
-
-    if Config.wantedLevel.disableDispatch then
-        for service = 1, 15 do
-            EnableDispatchService(service, false)
+    for option, services in pairs(groups) do
+        if cfg[option] ~= false then
+            for i = 1, #services do
+                EnableDispatchService(services[i], false)
+            end
         end
     end
-end
-
-disableWantedLevel()
-Small.onSpawn(capWantedLevel) -- SetMaxWantedLevel is player-scoped and resets with the ped
-Small.onInterval(Config.wantedLevel.interval or 2000, disableWantedLevel)
-
--- ...ThisFrame native, so per-frame -- but on the shared coordinator thread,
--- not a second Wait(0) coroutine of its own.
-if Config.wantedLevel.hideHudStar ~= false then
-    Small.onFrame(function()
-        HideHudComponentThisFrame(1) -- Wanted stars
-    end)
-end
+end)
