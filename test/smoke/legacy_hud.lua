@@ -46,4 +46,4 @@ provided.setDisplayAmmo(true); assert(frameActive==false, 'nothing to reassert: 
 provided.addDisableHudComponents(3); assert(frameActive==true and scheduledFrames==1, 'resumes without a second registration')
 provided.removeDisableHudComponents(3); assert(frameActive==false)
 assert(provided.getHandsup()==false); anim=true; assert(provided.getHandsup()==true)
-print('qbsmallresources legacy hud: all checks passed')
+print('kora_utils legacy hud: all checks passed')

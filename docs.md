@@ -24,7 +24,7 @@ trimming the config has a real performance payoff, not just a cosmetic one.
 
 ### QBCore compatibility exports
 
-Provided under `qb-smallresources` (and `qbsmallresources`), so stock callers run unmodified:
+Provided under `qb-smallresources` (and `kora_utils`), so stock callers run unmodified:
 
 - Client: `addDisableControls`, `removeDisableControls`, `getDisableControls`, and `addDisableHudComponents`,
   `removeDisableHudComponents`, `getDisableHudComponents`, `setDisplayAmmo`, `getDisplayAmmo`, `DecorSet`

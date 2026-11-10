@@ -27,4 +27,4 @@ provided.addDisableControls({[2]=24});assert(#provided.getDisableControls()==1,'
 provided.removeDisableControls(75);calls={};frame();assert(#calls==0,'removed controls stop suppression')
 assert(frameActive==false,'frame task paused once no controls remain')
 provided.addDisableControls(30);assert(frameActive==true,'adding a control resumes the frame task')
-print('qbsmallresources legacy controls: 10 checks passed')
+print('kora_utils legacy controls: 10 checks passed')

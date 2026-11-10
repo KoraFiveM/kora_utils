@@ -20,7 +20,7 @@ if stockDuckMode ~= false and stockDuckMode ~= 'frame' then stockDuckMode = 'eve
 -- true when the stock duck is handled module-wide (either mode), so stance changes
 -- need no frame task of their own for it.
 local blockStock = stockDuckMode ~= false
-local EMOTE_KEY = 'qbemotemenu:active'
+local EMOTE_KEY = 'kora_emotemenu:active'
 
 local stance = 'standing'
 local keyHeld = false
@@ -180,7 +180,7 @@ local function restoreWalkStyle(ped)
     ResetPedMovementClipset(ped, 0.25)
     ResetPedStrafeClipset(ped)
 
-    local savedWalk = LocalPlayer and LocalPlayer.state and LocalPlayer.state['qbemotemenu:walk']
+    local savedWalk = LocalPlayer and LocalPlayer.state and LocalPlayer.state['kora_emotemenu:walk']
     if savedWalk and GetResourceState('kora_emotemenu') == 'started' then
         pcall(function() exports.kora_emotemenu:setWalk(savedWalk, true) end)
     end
@@ -317,7 +317,7 @@ local function toggleCrouch()
 end
 
 Kora.keybind.add({
-    name = 'qbsmallresources_crouch',
+    name = 'kora_utils_crouch',
     description = 'Toggle crouch / hold prone',
     defaultKey = config.keybind,
     onPressed = function()
@@ -358,7 +358,7 @@ for _, bind in ipairs({
     local drivesAnimation = dir == 'forward' or dir == 'backward'
 
     Kora.keybind.add({
-        name = 'qbsmallresources_prone_' .. dir,
+        name = 'kora_utils_prone_' .. dir,
         description = bind.label,
         defaultKey = bind.key,
         onPressed = function()

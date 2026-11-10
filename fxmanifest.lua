@@ -5,8 +5,6 @@ lua54 'yes'
 use_experimental_fxv2_oal 'yes'
 
 name 'kora_utils'
--- Keep the legacy resource name resolvable for exports['qbsmallresources'] callers.
-provide 'qbsmallresources'
 author 'Jamie'
 version '1.0.0'
 description 'A bundle of small always-on world/player tweaks built on kora_lib -- idle-camera kill, weapon-wheel removal, wanted-level suppression, zeroed health regen, and weapon/vehicle blacklists, all sharing one tick coordinator.'

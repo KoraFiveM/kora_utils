@@ -80,7 +80,7 @@ would load `blacklist` first. Same discipline as kora_lib's own manifest.
 once, `handle.step()` resumes suspended tick loops one more iteration, and
 `handle.fire(name, ...)` dispatches a lifecycle event. Only the natives the
 tested modules actually call are mocked — a new native dependency should surface
-as a nil-call failure, not pass silently. A `[qbsmallresources] onSpawn handler
+as a nil-call failure, not pass silently. A `[kora_utils] onSpawn handler
 errored: boom` line in test output is the intended pcall negative-path
 assertion, not a failure.
 

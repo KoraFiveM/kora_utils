@@ -19,7 +19,7 @@ local function reset()
     nextSample, peakSpeed, previousBody, frameBodyChange, peakTicks, damageDone = 0, 0, 0, 0, 0, false
     seatbelt, harness, harnessUses = false, false, 0
     announce()
-    TriggerServerEvent('qbsmallresources:server:leaveVehicle')
+    TriggerServerEvent('kora_utils:server:leaveVehicle')
 end
 
 local function allowedVehicle(value)
@@ -54,7 +54,7 @@ end)
 local function toggleSeatbelt()
     if not vehicle or IsPauseMenuActive() then return end
     if not separateHarness and Config.seatbelt.removeEmptyHarness and harness and harnessUses == 0 then
-        TriggerServerEvent('qbsmallresources:server:removeHarness')
+        TriggerServerEvent('kora_utils:server:removeHarness')
         return
     end
     seatbelt = not seatbelt
@@ -63,14 +63,14 @@ local function toggleSeatbelt()
 end
 RegisterCommand('toggleseatbelt', toggleSeatbelt, false)
 RegisterKeyMapping('toggleseatbelt', 'Toggle Seatbelt', 'keyboard', Config.seatbelt.keybind)
-AddEventHandler('qbsmallresources:client:toggleSeatbelt', toggleSeatbelt)
+AddEventHandler('kora_utils:client:toggleSeatbelt', toggleSeatbelt)
 
 for name, handler in pairs({HasHarness=function() return harness end, HasSeatbeltOn=function() return seatbelt end}) do
     exports(name, handler)
     Kora.compat.provideExport('qb-smallresources', name, handler)
 end
 
-RegisterNetEvent('qbsmallresources:client:harnessState', function(enabled, uses)
+RegisterNetEvent('kora_utils:client:harnessState', function(enabled, uses)
     if source ~= 65535 then return end
     if enabled == true and vehicle then
         if not harness and not separateHarness then seatbelt = true end
@@ -85,7 +85,7 @@ end)
 RegisterNetEvent('seatbelt:client:UseHarness', function(item, token)
     if type(item) ~= 'table' then return end
     if busy or LocalPlayer.state.inv_busy or not vehicle then
-        if token ~= nil then TriggerServerEvent('qbsmallresources:server:cancelHarness', token) end
+        if token ~= nil then TriggerServerEvent('kora_utils:server:cancelHarness', token) end
         return
     end
     busy = true
@@ -99,10 +99,10 @@ RegisterNetEvent('seatbelt:client:UseHarness', function(item, token)
     if lockInventory then LocalPlayer.state:set('inv_busy', false, true) end
     busy = false
     if not ok or not completed or vehicle ~= selected then
-        TriggerServerEvent('qbsmallresources:server:cancelHarness', token)
+        TriggerServerEvent('kora_utils:server:cancelHarness', token)
         return
     end
-    if Kora.callback.trigger('qbsmallresources:server:finishHarness', {slot=item.slot}, token) ~= true then
+    if Kora.callback.trigger('kora_utils:server:finishHarness', {slot=item.slot}, token) ~= true then
         Kora.notify.send({title='Harness',message='The harness could not be equipped.',type='error'})
     end
 end)
@@ -114,7 +114,7 @@ if type(harnessCommand) == 'string' and harnessCommand ~= '' then
         if requesting or busy or not vehicle or IsPauseMenuActive() then return end
         requesting = true
         CreateThread(function()
-            local ok, result = pcall(Kora.callback.trigger, 'qbsmallresources:server:toggleHarness')
+            local ok, result = pcall(Kora.callback.trigger, 'kora_utils:server:toggleHarness')
             requesting = false
             if ok and result == 'noitem' then
                 Kora.notify.send({title='Race Harness',message='You do not have a race harness to use',type='error'})

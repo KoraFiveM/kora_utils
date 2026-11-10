@@ -42,11 +42,11 @@ end}}
 dofile(root..'modules/seatbelt/server.lua')
 local function fire(name,...) source=1;events[name](...) end
 local function begin(uses)
- fire('qbsmallresources:server:leaveVehicle');restore(uses);body=1000;vehicle=70;bucket=0;kind='automobile'
+ fire('kora_utils:server:leaveVehicle');restore(uses);body=1000;vehicle=70;bucket=0;kind='automobile'
  usable(1,{slot=3,info={uses=999}})
  return messages[#messages].args[2]
 end
-local function finish(token) clock=clock+5000;return callbacks['qbsmallresources:server:finishHarness'](1,{slot=3},token) end
+local function finish(token) clock=clock+5000;return callbacks['kora_utils:server:finishHarness'](1,{slot=3},token) end
 local function lastState() return messages[#messages].args[1] end
 h.test('actual owned harness and supported vehicle are required before a use starts',function()
  restore(3);local count=#messages;usable(1,{slot=99});h.assertEqual(#messages,count)
@@ -55,8 +55,8 @@ h.test('actual owned harness and supported vehicle are required before a use sta
 end)
 h.test('early completion, forged token and replay cannot equip or consume another item',function()
  local token=begin(3)
- h.assertFalse(callbacks['qbsmallresources:server:finishHarness'](1,{slot=3},'forged'))
- h.assertFalse(callbacks['qbsmallresources:server:finishHarness'](1,{slot=3},token))
+ h.assertFalse(callbacks['kora_utils:server:finishHarness'](1,{slot=3},'forged'))
+ h.assertFalse(callbacks['kora_utils:server:finishHarness'](1,{slot=3},token))
  h.assertEqual(writes,0)
  token=begin(3);h.assertTrue(finish(token));h.assertTrue(lastState())
  h.assertEqual(item.info.uses,2);h.assertEqual(item.metadata.uses,2);h.assertEqual(item.info.label,'keep')
@@ -80,12 +80,12 @@ h.test('the final equipped use is consumed once and expires after the next impac
  body=900;clock=clock+1000;fire('seatbelt:DoHarnessDamage');h.assertFalse(lastState());h.assertEqual(removals,1)
 end)
 h.test('cancellation, vehicle changes and failed mutations do not grant harness state',function()
- local token=begin(5);fire('qbsmallresources:server:cancelHarness',token);h.assertFalse(finish(token));h.assertEqual(writes,0)
+ local token=begin(5);fire('kora_utils:server:cancelHarness',token);h.assertFalse(finish(token));h.assertEqual(writes,0)
  token=begin(5);vehicle=71;h.assertFalse(finish(token));h.assertEqual(writes,0)
  token=begin(5);failWrite=true;h.assertFalse(finish(token));h.assertEqual(writes,0)
 end)
 h.test('leave, disconnect and dependency stop invalidate pending and in-flight authority',function()
- local token=begin(5);duringWrite=function() fire('qbsmallresources:server:leaveVehicle') end
+ local token=begin(5);duringWrite=function() fire('kora_utils:server:leaveVehicle') end
  h.assertFalse(finish(token));h.assertFalse(lastState())
  token=begin(5);source=1;lifecycle.playerDropped();h.assertFalse(finish(token))
  token=begin(5);lifecycle.onResourceStop('kora_inventory');h.assertFalse(finish(token))
@@ -95,8 +95,8 @@ h.test('expired actions and removed items cannot be equipped',function()
  token=begin(5);item=nil;h.assertFalse(finish(token))
 end)
 h.test('key/command toggle attaches with an owned item and removes without one',function()
- local toggle=callbacks['qbsmallresources:server:toggleHarness']
- fire('qbsmallresources:server:leaveVehicle');restore(2);clock=clock+31000
+ local toggle=callbacks['kora_utils:server:toggleHarness']
+ fire('kora_utils:server:leaveVehicle');restore(2);clock=clock+31000
  kind='bike';h.assertEqual(toggle(1),'novehicle');kind='automobile'
  h.assertEqual(toggle(1),'attaching');local token=messages[#messages].args[2]
  h.assertEqual(toggle(1),'busy')
@@ -105,16 +105,16 @@ h.test('key/command toggle attaches with an owned item and removes without one',
  h.assertEqual(toggle(1),'removing');local sent=messages[#messages]
  h.assertEqual(sent.name,'seatbelt:client:UseHarness');h.assertEqual(sent.args[1].slot,false)
  h.assertEqual(toggle(1),'busy')
- h.assertFalse(callbacks['qbsmallresources:server:finishHarness'](1,{slot=3},sent.args[2]))
- clock=clock+5000;h.assertTrue(callbacks['qbsmallresources:server:finishHarness'](1,{slot=false},sent.args[2]))
+ h.assertFalse(callbacks['kora_utils:server:finishHarness'](1,{slot=3},sent.args[2]))
+ clock=clock+5000;h.assertTrue(callbacks['kora_utils:server:finishHarness'](1,{slot=false},sent.args[2]))
  h.assertFalse(lastState())
  h.assertEqual(toggle(1),'noitem')
 end)
 h.test('the last consumed use can still be removed by key/command',function()
  local token=begin(1);h.assertTrue(finish(token));h.assertEqual(removals,1);h.assertTrue(lastState())
- local toggle=callbacks['qbsmallresources:server:toggleHarness']
+ local toggle=callbacks['kora_utils:server:toggleHarness']
  h.assertEqual(toggle(1),'removing');local sent=messages[#messages]
- clock=clock+5000;h.assertTrue(callbacks['qbsmallresources:server:finishHarness'](1,{slot=false},sent.args[2]))
+ clock=clock+5000;h.assertTrue(callbacks['kora_utils:server:finishHarness'](1,{slot=false},sent.args[2]))
  h.assertFalse(lastState());h.assertEqual(removals,1)
 end)
 h.report('seatbelt server')

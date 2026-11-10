@@ -1,4 +1,4 @@
 theme: jekyll-theme-cayman
-title: qbsmallresources
+title: kora_utils
 description: "A bundle of small, always-on world/player tweaks built on kora_lib -- idle-camera kill, weapon-wheel removal, wanted-level suppression, zeroed health regen, and weapon/vehicle blacklists, all sharing one tick coordinator."
 show_downloads: false

@@ -20,7 +20,7 @@ function GetEntityRoutingBucket() return 0 end
 function GetVehicleType() return 'automobile' end
 function GetVehicleBodyHealth() return 1000 end
 Kora={resources={serverRegistry=function() return {track=function() end,untrack=function() end} end},
- callback={register=function(name,fn) if name=='qbsmallresources:server:finishHarness' then callback=fn end end}}
+ callback={register=function(name,fn) if name=='kora_utils:server:finishHarness' then callback=fn end end}}
 local core={
  getShared=function(_,_,name) return name=='harness' and {name='harness',weight=1000,unique=true,useable=true,type='item'} or nil end,
  getPlayerData=function(_,src,path) return src==1 and copy(path and player[path[1]] or player) end,
@@ -29,9 +29,9 @@ local core={
  createUseable=function(_,_,fn) usable=fn end,
 }
 exports=setmetatable({kora_core=core},{__call=function() end})
-dofile(inv..'config.lua');dofile(inv..'shared.lua');Config.qbinventory.cash.asItem=false
+dofile(inv..'config.lua');dofile(inv..'shared.lua');Config.kora_inventory.cash.asItem=false
 dofile(inv..'server.lua');dofile(inv..'server/compat/qb.lua')
-exports['qb-inventory']={SetItemData=function(_,...) return QbInventory.compat.qb.SetItemData(...) end}
+exports['qb-inventory']={SetItemData=function(_,...) return KoraInventory.compat.qb.SetItemData(...) end}
 Config.HarnessUses=20;Config.seatbelt={enabled=true,equipDuration=5000,actionLifetime=30000,crashCooldown=1000}
 dofile(resource..'modules/seatbelt/server.lua')
 usable(1,{slot=3});now=5000

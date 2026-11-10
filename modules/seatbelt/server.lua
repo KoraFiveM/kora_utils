@@ -26,7 +26,7 @@ end
 
 local function publish(src)
     local state = equipped[src]
-    TriggerClientEvent('qbsmallresources:client:harnessState', src, state ~= nil, state and state.uses or 0)
+    TriggerClientEvent('kora_utils:client:harnessState', src, state ~= nil, state and state.uses or 0)
 end
 
 local function clear(src)
@@ -114,23 +114,23 @@ local function finish(src, supplied, token)
     return true
 end
 
-Kora.callback.register('qbsmallresources:server:finishHarness', finish, {rateLimit={max=4,window=10000}})
+Kora.callback.register('kora_utils:server:finishHarness', finish, {rateLimit={max=4,window=10000}})
 local harnessCommand = (Config.seatbelt.harness or {}).command
 if type(harnessCommand) == 'string' and harnessCommand ~= '' then
-    Kora.callback.register('qbsmallresources:server:toggleHarness', toggle, {rateLimit={max=4,window=10000}})
+    Kora.callback.register('kora_utils:server:toggleHarness', toggle, {rateLimit={max=4,window=10000}})
 end
 RegisterNetEvent('equip:harness', function(item) finish(source, item) end)
-RegisterNetEvent('qbsmallresources:server:cancelHarness', function(token)
+RegisterNetEvent('kora_utils:server:cancelHarness', function(token)
     local action = pending[source]
     if action and action.token == token then pending[source] = nil end
 end)
-RegisterNetEvent('qbsmallresources:server:removeHarness', function()
+RegisterNetEvent('kora_utils:server:removeHarness', function()
     local src = source
     local state = equipped[src]
     if not Config.seatbelt.removeEmptyHarness or not state or state.uses ~= 0 or busy[src] or pending[src] then return end
     clear(src)
 end)
-RegisterNetEvent('qbsmallresources:server:leaveVehicle', function() clear(source) end)
+RegisterNetEvent('kora_utils:server:leaveVehicle', function() clear(source) end)
 
 RegisterNetEvent('seatbelt:DoHarnessDamage', function()
     local src, now = source, GetGameTimer()
