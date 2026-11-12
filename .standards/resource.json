@@ -1,0 +1,70 @@
+{
+  "resource": "kora_utils",
+  "standardsRevision": "2026-11-12.1",
+  "realms": {
+    "client": [
+      "client/compat.lua",
+      "client/core.lua",
+      "client/hud.lua",
+      "client/util.lua",
+      "modules/blacklist/client.lua",
+      "modules/crouch/client.lua",
+      "modules/healthregen/client.lua",
+      "modules/idlecamera/client.lua",
+      "modules/seatbelt/client.lua",
+      "modules/vehiclerewards/client.lua",
+      "modules/wantedlevel/client.lua",
+      "modules/weaponwheel/client.lua",
+      "modules/worlddepop/client.lua"
+    ],
+    "server": [
+      "modules/blacklist/server.lua",
+      "modules/seatbelt/server.lua",
+      "server/timedjobs.lua"
+    ],
+    "shared": [
+      "config.lua"
+    ],
+    "manifest": [
+      "fxmanifest.lua"
+    ],
+    "test": [
+      "test/harness.lua",
+      "test/mocks.lua",
+      "test/resource_path.lua",
+      "test/smoke/blacklist.lua",
+      "test/smoke/core.lua",
+      "test/smoke/crouch.lua",
+      "test/smoke/legacy_controls.lua",
+      "test/smoke/legacy_hud.lua",
+      "test/smoke/ped_flags.lua",
+      "test/smoke/seatbelt_client.lua",
+      "test/smoke/seatbelt_inventory.lua",
+      "test/smoke/seatbelt_server.lua",
+      "test/smoke/timed_jobs.lua",
+      "test/smoke/vehicle_rewards.lua",
+      "test/smoke/worlddepop.lua"
+    ]
+  },
+  "exclude": [
+    ".git/*",
+    ".github/*",
+    ".standards/*",
+    "node_modules/*",
+    "**/node_modules/*",
+    "vendor/*",
+    "**/vendor/*",
+    "web/*",
+    "ui/*",
+    "html/*",
+    "dist/*",
+    "artifacts/*",
+    "runtime/*",
+    "txData/*",
+    "storage/*",
+    "stream/*",
+    "docs/*",
+    "__pycache__/*",
+    "modules/lookup/data/*"
+  ]
+}
