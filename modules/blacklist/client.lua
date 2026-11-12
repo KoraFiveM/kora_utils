@@ -1,9 +1,9 @@
-RegisterNetEvent("kora_utils:blacklist:vehicleBlocked", function()
+RegisterNetEvent('kora_utils:blacklist:vehicleBlocked', function()
     if not Config.blacklist.notifyOnVehicleBlock then return end
     Kora.notify.send({
-        title = "Vehicle Blacklist",
-        message = "That vehicle is not allowed on this server.",
-        type = "error",
+        title = Kora.lang('vehicle_blacklist'),
+        message = Kora.lang('vehicle_blocked'),
+        type = 'error',
     })
 end)
 
@@ -18,9 +18,9 @@ local function enforceWeaponBlacklist(weapon)
 
     if Config.blacklist.notifyOnStrip then
         Kora.notify.send({
-            title = "Weapon removed",
-            message = "That weapon isn't allowed on this server.",
-            type = "error",
+            title = Kora.lang('weapon_removed'),
+            message = Kora.lang('weapon_blocked'),
+            type = 'error',
         })
     end
 end
@@ -31,5 +31,7 @@ local function watchWeapon()
 end
 watchWeapon()
 AddEventHandler('onClientResourceStart', function(resource)
-    if resource == 'kora_lib' then watchWeapon() end
+    if resource == 'kora_lib' then
+        watchWeapon()
+    end
 end)

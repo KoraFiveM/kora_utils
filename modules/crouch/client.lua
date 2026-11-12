@@ -15,8 +15,12 @@ if not Config.crouch.enabled then return end
 local config = Config.crouch
 -- blockStockDuck: 'event' (default; `true`/nil mean the same), 'frame', or false.
 local stockDuckMode = config.blockStockDuck
-if stockDuckMode == true or stockDuckMode == nil then stockDuckMode = 'event' end
-if stockDuckMode ~= false and stockDuckMode ~= 'frame' then stockDuckMode = 'event' end
+if stockDuckMode == true or stockDuckMode == nil then
+    stockDuckMode = 'event'
+end
+if stockDuckMode ~= false and stockDuckMode ~= 'frame' then
+    stockDuckMode = 'event'
+end
 -- true when the stock duck is handled module-wide (either mode), so stance changes
 -- need no frame task of their own for it.
 local blockStock = stockDuckMode ~= false
@@ -67,7 +71,9 @@ end
 
 local function clearStockStance(ped)
     SetPedUsingActionMode(ped, false, -1, 0)
-    if GetPedStealthMovement(ped) then SetPedStealthMovement(ped, false, 'DEFAULT_ACTION') end
+    if GetPedStealthMovement(ped) then
+        SetPedStealthMovement(ped, false, 'DEFAULT_ACTION')
+    end
 end
 
 local stand, playProneIdle, playProneStep, syncProne
@@ -76,7 +82,9 @@ local stand, playProneIdle, playProneStep, syncProne
 -- prone (sprint/jump must be disabled every frame, and A/D turn the ped), or a
 -- held/active stance when the stock duck is not already blocked globally.
 local setFrameActive = Small.onFrame(function()
-    if not blockStock then DisableControlAction(0, 36, true) end
+    if not blockStock then
+        DisableControlAction(0, 36, true)
+    end
     if stance ~= 'prone' then return end
 
     DisableControlAction(0, 21, true)
@@ -137,7 +145,9 @@ local function startTick()
         if stance == 'crouched' and (config.reassertInterval or 0) > 0 then
             SetPedMovementClipset(ped, config.crouchClipset, 0.25)
             SetPedStrafeClipset(ped, config.crouchStrafeClipset)
-            if idleBlocked then SetPedCanPlayAmbientIdles(ped, true, true) end
+            if idleBlocked then
+                SetPedCanPlayAmbientIdles(ped, true, true)
+            end
         end
 
         SetTimeout(tickPeriod(), tick)
@@ -168,7 +178,9 @@ syncProne = function()
         -- (a key change, standing up) syncs first.
         local token = stepToken
         SetTimeout(math.max(proneStepEndsAt - GetGameTimer(), 1), function()
-            if token == stepToken then syncProne() end
+            if token == stepToken then
+                syncProne()
+            end
         end)
     elseif proneMotion ~= 'idle' then
         local clip = proneMotion == 'backward' and config.proneBackwardAnim or config.proneForwardAnim
@@ -187,9 +199,13 @@ local function restoreWalkStyle(ped)
 end
 
 local function releaseAssets()
-    for clipset in pairs(loadedClipsets) do RemoveClipSet(clipset) end
+    for clipset in pairs(loadedClipsets) do
+        RemoveClipSet(clipset)
+    end
     loadedClipsets = {}
-    if proneAnimationLoaded then RemoveAnimDict(config.proneAnimDict) end
+    if proneAnimationLoaded then
+        RemoveAnimDict(config.proneAnimDict)
+    end
     proneAnimationLoaded = false
 end
 
@@ -202,7 +218,9 @@ local function stopProneAnimation(ped)
 end
 
 stand = function(ped)
-    if stance == 'prone' then stopProneAnimation(ped) end
+    if stance == 'prone' then
+        stopProneAnimation(ped)
+    end
     restoreWalkStyle(ped)
     clearStockStance(ped)
     if idleBlocked then
@@ -219,7 +237,9 @@ end
 
 local function loadClipset(name)
     local loaded = Kora.stream.loadClipSet(name)
-    if loaded ~= false then loadedClipsets[name] = true end
+    if loaded ~= false then
+        loadedClipsets[name] = true
+    end
     return loaded ~= false
 end
 
@@ -231,7 +251,9 @@ local function crouch(ped)
         return false
     end
 
-    if stance == 'prone' then stopProneAnimation(ped) end
+    if stance == 'prone' then
+        stopProneAnimation(ped)
+    end
     clearStockStance(ped)
     SetPedMovementClipset(ped, config.crouchClipset, 0.25)
     SetPedStrafeClipset(ped, config.crouchStrafeClipset)
@@ -294,7 +316,9 @@ end
 local function clearStealth()
     if inVehicle() then return end
     local ped = PlayerPedId()
-    if GetPedStealthMovement(ped) then clearStockStance(ped) end
+    if GetPedStealthMovement(ped) then
+        clearStockStance(ped)
+    end
 end
 
 -- 'event' mode: the crouch key is normally the same key as GTA's own duck
@@ -304,7 +328,9 @@ end
 local STOCK_DUCK_RECHECKS = { 0, 50, 150 }
 local function suppressStockDuck()
     if stockDuckMode ~= 'event' then return end
-    for i = 1, #STOCK_DUCK_RECHECKS do SetTimeout(STOCK_DUCK_RECHECKS[i], clearStealth) end
+    for i = 1, #STOCK_DUCK_RECHECKS do
+        SetTimeout(STOCK_DUCK_RECHECKS[i], clearStealth)
+    end
 end
 
 local function toggleCrouch()
@@ -318,7 +344,7 @@ end
 
 Kora.keybind.add({
     name = 'kora_utils_crouch',
-    description = 'Toggle crouch / hold prone',
+    description = Kora.lang('toggle_crouch_prone'),
     defaultKey = config.keybind,
     onPressed = function()
         if keyHeld then return end
@@ -331,7 +357,9 @@ Kora.keybind.add({
         Small.once(function()
             Wait(config.holdDuration)
             if not keyHeld or pressId ~= currentPress then return end
-            if prone(PlayerPedId()) then heldPressId = currentPress end
+            if prone(PlayerPedId()) then
+                heldPressId = currentPress
+            end
         end)
     end,
     onReleased = function()
@@ -349,10 +377,26 @@ Kora.keybind.add({
 -- polling. Forward/backward drive the crawl animation directly; left/right only
 -- set a flag the prone frame task reads.
 for _, bind in ipairs({
-    { dir = 'forward',  key = config.proneForwardKey  or 'W', label = 'Prone: crawl forward' },
-    { dir = 'backward', key = config.proneBackwardKey or 'S', label = 'Prone: crawl backward' },
-    { dir = 'left',     key = config.proneLeftKey     or 'A', label = 'Prone: turn left' },
-    { dir = 'right',    key = config.proneRightKey    or 'D', label = 'Prone: turn right' },
+    {
+        dir = 'forward',
+        key = config.proneForwardKey or 'W',
+        label = Kora.lang('prone_forward'),
+    },
+    {
+        dir = 'backward',
+        key = config.proneBackwardKey or 'S',
+        label = Kora.lang('prone_backward'),
+    },
+    {
+        dir = 'left',
+        key = config.proneLeftKey or 'A',
+        label = Kora.lang('prone_left'),
+    },
+    {
+        dir = 'right',
+        key = config.proneRightKey or 'D',
+        label = Kora.lang('prone_right'),
+    },
 }) do
     local dir = bind.dir
     local drivesAnimation = dir == 'forward' or dir == 'backward'
@@ -363,11 +407,15 @@ for _, bind in ipairs({
         defaultKey = bind.key,
         onPressed = function()
             moveKeys[dir] = true
-            if drivesAnimation then syncProne() end
+            if drivesAnimation then
+                syncProne()
+            end
         end,
         onReleased = function()
             moveKeys[dir] = false
-            if drivesAnimation then syncProne() end
+            if drivesAnimation then
+                syncProne()
+            end
         end,
     })
 end
@@ -377,7 +425,9 @@ end
 AddStateBagChangeHandler(EMOTE_KEY, nil, function(bagName, _, value)
     if bagName ~= ('player:%d'):format(GetPlayerServerId(PlayerId())) then return end
     emoteActive = value and true or false
-    if emoteActive and stance ~= 'standing' then stand(PlayerPedId()) end
+    if emoteActive and stance ~= 'standing' then
+        stand(PlayerPedId())
+    end
 end)
 
 if stockDuckMode == 'frame' then
@@ -394,7 +444,9 @@ if stockDuckMode == 'frame' then
     end
     watchVehicle()
     AddEventHandler('onClientResourceStart', function(resource)
-        if resource == 'kora_lib' then watchVehicle() end
+        if resource == 'kora_lib' then
+            watchVehicle()
+        end
     end)
 end
 
@@ -423,5 +475,7 @@ end)
 AddEventHandler('onClientResourceStop', function(resource)
     if resource ~= GetCurrentResourceName() then return end
     local ped = PlayerPedId()
-    if DoesEntityExist(ped) then stand(ped) end
+    if DoesEntityExist(ped) then
+        stand(ped)
+    end
 end)

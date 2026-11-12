@@ -21,6 +21,10 @@ shared_scripts {
     'config.lua'
 }
 
+files {
+    'locales/*.lua',
+}
+
 -- Explicit load order, never globbed -- same discipline as kora_lib's own
 -- fxmanifest. client/core.lua defines Small.onFrame/onInterval/onSpawn and MUST
 -- load before any module that schedules through them; client/util.lua defines
