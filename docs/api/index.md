@@ -1,13 +1,21 @@
 ---
-title: Exports
-sidebar_position: 5
+title: "API reference"
+sidebar_position: 1
 ---
 
-# Exports
+# API reference
+
+| Module | Namespace | Realms |
+| --- | --- | --- |
+| [Legacy controls & HUD (qb-smallresources compatibility)](./legacy-controls-hud.md) | `exports.kora_utils` | client |
+| [Seatbelt & harness](./seatbelt-exports.md) | `exports.kora_utils` | client |
+| [Timed jobs (qb-smallresources compatibility)](./timed-jobs.md) | `exports.kora_utils` | server |
+
+## Registration and qb-smallresources republishing
 
 Every export below is registered on `kora_utils` and republished under `qb-smallresources` through `Kora.compat.provideExport`, so `exports['qb-smallresources']:Name()` works unchanged. The manifest also declares `provide 'qb-smallresources'`.
 
-## Client
+## Additional behaviour (from code)
 
 ### Controls
 
@@ -30,10 +38,7 @@ There is no default hidden component list and no default density.
 
 Only registered when `Config.seatbelt.enabled` is true.
 
-- `HasSeatbeltOn()` - returns whether the local belt is on.
-- `HasHarness()` - returns whether the local harness is attached.
-
-## Server
+### Server (timed jobs)
 
 - `CreateTimedJob(hour, min, cb)` - run `cb(day, hour, min)` at the given server local time (`os.date`), once per day. `day` is the Lua `wday` (1 is Sunday). Returns a numeric id, or `nil` (with a console warning) if arguments are invalid. Jobs share a single loop aligned to the minute.
 - `ForceRunTimedJob(id)` - run the job now.
