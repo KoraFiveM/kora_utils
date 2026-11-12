@@ -99,7 +99,7 @@ The QBCore backwards-compatibility implementation explicitly added `modules/seat
 
 ## Documentation
 
-User-facing documentation lives in `docs/` (Markdown, published via the Kora Docusaurus site, kora_docs_next). Read `docs/index.md` first for an overview of features, configuration, commands, exports, events and database usage.
+User-facing documentation lives in `docs/` (Markdown, published via the Kora Docusaurus site, kora_docs_next). Read `docs/index.md` first (it has a documentation map). Layout: `installation.md` (dependencies, setup), `how-to-use.md` (coordinator, feature catalogue, seatbelt), `commands.md` (commands and keybinds), `api/` (`index.md` plus one page per export group: legacy-controls-hud, seatbelt-exports, timed-jobs), and topic pages (`features.md`, `configuration.md`, `events.md`, `items.md`, `architecture.md`, `troubleshooting.md`). Exports belong in `api/`, not a separate page.
 
 When you add, change, or remove a feature, config option, command, export, event, item, permission, or database table/column, update the matching page in `docs/` in the same change. Keep docs accurate to the code; do not document behaviour that does not exist.
 

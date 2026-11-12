@@ -11,15 +11,19 @@ All client features run through one shared tick coordinator (`client/core.lua`).
 
 Current version: see `version` in `fxmanifest.lua`.
 
-## Pages
+## Documentation map
 
+- [Installation](./installation.md) - dependencies, load order, OneSync, compatibility and tests.
+- [How to use](./how-to-use.md) - the tick coordinator, feature catalogue, seatbelt and race harness.
+- [Commands](./commands.md) - `toggleseatbelt`, the race harness command, crouch and prone keybinds.
+- [API reference](./api/index.md) - client and server exports, also published as `qb-smallresources`.
+  - [Legacy controls & HUD](./api/legacy-controls-hud.md) - control disabling, HUD components, density, ammo, hands-up.
+  - [Seatbelt & harness](./api/seatbelt-exports.md) - `HasSeatbeltOn` and `HasHarness`.
+  - [Timed jobs](./api/timed-jobs.md) - `CreateTimedJob`, `ForceRunTimedJob`, `StopTimedJob`.
 - [Features](./features.md) - what each module does and which natives it uses.
 - [Configuration](./configuration.md) - every `Config` option and its default.
-- [Commands and keybinds](./commands.md) - `toggleseatbelt`, the race harness command, crouch and prone keys.
-- [Exports](./exports.md) - client and server exports, also published as `qb-smallresources`.
 - [Events](./events.md) - net events, local events, callbacks and state bags.
 - [Items](./items.md) - the `harness` item and its durability.
-- [Dependencies and installation](./installation.md) - required resources, load order, OneSync.
 - [Architecture](./architecture.md) - the `Small.*` tick coordinator and how to add a module.
 - [Troubleshooting](./troubleshooting.md) - common problems and known limitations.
 

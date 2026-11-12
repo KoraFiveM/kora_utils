@@ -1,6 +1,6 @@
 ---
 title: Features
-sidebar_position: 2
+sidebar_position: 6
 ---
 
 # Features
@@ -18,7 +18,7 @@ Each module is toggled in `config.lua`; see [Configuration](./configuration.md).
 | `blacklist` | client and server | Strips blacklisted weapons; refuses blacklisted vehicle and ped spawns. |
 | `worlddepop` | client | Disables random cops, calms ambient groups, stops ped weapon drops, optionally disables drive-by. |
 | `seatbelt` | client and server | Seatbelt, race harness with durability, crash ejection. |
-| compat exports | client and server | `qb-smallresources` exports. See [Exports](./exports.md). |
+| compat exports | client and server | `qb-smallresources` exports. See [API reference](./api/index.md). |
 
 ## wantedlevel
 
@@ -67,4 +67,4 @@ Enabled by `Config.seatbelt.enabled`. See [Commands](./commands.md), [Events](./
 
 ## Out of scope
 
-Consumables (`AddFood` and similar) are not in this resource. See [Exports](./exports.md).
+Consumables (`AddFood` and similar) are not in this resource. See [API reference](./api/index.md).
