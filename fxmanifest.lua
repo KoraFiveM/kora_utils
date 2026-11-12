@@ -6,7 +6,7 @@ use_experimental_fxv2_oal 'yes'
 
 name 'kora_utils'
 author 'Jamie'
-version '0.1.0'
+version '0.2.0'
 description 'A bundle of small always-on world/player tweaks built on kora_lib -- idle-camera kill, weapon-wheel removal, wanted-level suppression, zeroed health regen, and weapon/vehicle blacklists, all sharing one tick coordinator.'
 
 dependencies { 'kora_lib', 'kora_core', 'kora_inventory' }
