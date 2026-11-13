@@ -28,7 +28,7 @@ local function publish(src)
     local state = equipped[src]
     TriggerClientEvent('kora_utils:client:harnessState', src, state ~= nil, state and state.uses or 0)
 end
-
+ 
 local function clear(src)
     if type(src) ~= 'number' or src < 1 then return end
     pending[src], equipped[src], busy[src] = nil, nil, nil

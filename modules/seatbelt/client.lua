@@ -38,7 +38,9 @@ local function changed(value)
     vehicle = current
     if vehicle then
         velocity = GetEntityVelocity(vehicle)
-        if setFrameActive then setFrameActive(true) end
+        if setFrameActive then
+            setFrameActive(true)
+        end
     end
 end
 local function watchVehicle()
@@ -48,7 +50,9 @@ end
 announce()
 watchVehicle()
 AddEventHandler('onClientResourceStart', function(resource)
-    if resource == 'kora_lib' then watchVehicle() end
+    if resource == 'kora_lib' then
+        watchVehicle()
+    end
 end)
 
 local function toggleSeatbelt()
@@ -62,10 +66,19 @@ local function toggleSeatbelt()
     TriggerServerEvent('InteractSound_SV:PlayWithinDistance', 5.0, seatbelt and 'carbuckle' or 'carunbuckle', 0.25)
 end
 RegisterCommand('toggleseatbelt', toggleSeatbelt, false)
-RegisterKeyMapping('toggleseatbelt', 'Toggle Seatbelt', 'keyboard', Config.seatbelt.keybind)
+RegisterKeyMapping('toggleseatbelt', Kora.lang('toggle_seatbelt'), 'keyboard', Config.seatbelt.keybind)
 AddEventHandler('kora_utils:client:toggleSeatbelt', toggleSeatbelt)
 
-for name, handler in pairs({HasHarness=function() return harness end, HasSeatbeltOn=function() return seatbelt end}) do
+local compatibilityExports = {
+    HasHarness = function()
+        return harness
+    end,
+    HasSeatbeltOn = function()
+        return seatbelt
+    end,
+}
+
+for name, handler in pairs(compatibilityExports) do
     exports(name, handler)
     Kora.compat.provideExport('qb-smallresources', name, handler)
 end
@@ -73,10 +86,14 @@ end
 RegisterNetEvent('kora_utils:client:harnessState', function(enabled, uses)
     if source ~= 65535 then return end
     if enabled == true and vehicle then
-        if not harness and not separateHarness then seatbelt = true end
+        if not harness and not separateHarness then
+            seatbelt = true
+        end
         harness, harnessUses = true, math.max(0, tonumber(uses) or 0)
     else
-        if harness and not separateHarness then seatbelt = false end
+        if harness and not separateHarness then
+            seatbelt = false
+        end
         harness, harnessUses = false, 0
     end
     announce()
@@ -85,25 +102,40 @@ end)
 RegisterNetEvent('seatbelt:client:UseHarness', function(item, token)
     if type(item) ~= 'table' then return end
     if busy or LocalPlayer.state.inv_busy or not vehicle then
-        if token ~= nil then TriggerServerEvent('kora_utils:server:cancelHarness', token) end
+        if token ~= nil then
+            TriggerServerEvent('kora_utils:server:cancelHarness', token)
+        end
         return
     end
     busy = true
     local selected = vehicle
     local lockInventory = harnessConfig.lockInventory == true
-    if lockInventory then LocalPlayer.state:set('inv_busy', true, true) end
+    if lockInventory then
+        LocalPlayer.state:set('inv_busy', true, true)
+    end
+    local label = Kora.lang(harness and 'remove_harness' or 'attach_harness')
     local ok, completed = pcall(Kora.progressbar.start, {
-        label = harness and 'Removing Race Harness' or 'Attaching Race Harness',
-        duration = Config.seatbelt.equipDuration, canCancel = true, disable = { combat = true },
+        label = label,
+        duration = Config.seatbelt.equipDuration,
+        canCancel = true,
+        disable = {
+            combat = true,
+        },
     })
-    if lockInventory then LocalPlayer.state:set('inv_busy', false, true) end
+    if lockInventory then
+        LocalPlayer.state:set('inv_busy', false, true)
+    end
     busy = false
     if not ok or not completed or vehicle ~= selected then
         TriggerServerEvent('kora_utils:server:cancelHarness', token)
         return
     end
-    if Kora.callback.trigger('kora_utils:server:finishHarness', {slot=item.slot}, token) ~= true then
-        Kora.notify.send({title='Harness',message='The harness could not be equipped.',type='error'})
+    if Kora.callback.trigger('kora_utils:server:finishHarness', { slot = item.slot }, token) ~= true then
+        Kora.notify.send({
+            title = Kora.lang('harness'),
+            message = Kora.lang('harness_equip_failed'),
+            type = 'error',
+        })
     end
 end)
 
@@ -117,24 +149,32 @@ if type(harnessCommand) == 'string' and harnessCommand ~= '' then
             local ok, result = pcall(Kora.callback.trigger, 'kora_utils:server:toggleHarness')
             requesting = false
             if ok and result == 'noitem' then
-                Kora.notify.send({title='Race Harness',message='You do not have a race harness to use',type='error'})
+                Kora.notify.send({
+                    title = Kora.lang('race_harness'),
+                    message = Kora.lang('harness_required'),
+                    type = 'error',
+                })
             end
         end)
     end, false)
-    RegisterKeyMapping(harnessCommand, 'Toggle Race Harness', 'keyboard', harnessConfig.keybind or '')
+    RegisterKeyMapping(harnessCommand, Kora.lang('toggle_race_harness'), 'keyboard', harnessConfig.keybind or '')
 end
 
 local function eject(ped)
     local coords = GetOffsetFromEntityInWorldCoords(vehicle, 1.0, 0.0, 1.0)
     SetEntityCoords(ped, coords.x, coords.y, coords.z, false, false, false, false)
     SetPedToRagdoll(ped, 5511, 5511, 0, false, false, false)
-    if velocity then SetEntityVelocity(ped, velocity.x * 4, velocity.y * 4, velocity.z * 4) end
+    if velocity then
+        SetEntityVelocity(ped, velocity.x * 4, velocity.y * 4, velocity.z * 4)
+    end
     SetEntityHealth(ped, math.max(0, GetEntityHealth(ped) - math.ceil(GetEntitySpeed(ped) * 8)))
 end
 
 setFrameActive = Small.onFrame(function()
     if not vehicle then
-        if setFrameActive then setFrameActive(false) end
+        if setFrameActive then
+            setFrameActive(false)
+        end
         return
     end
     if seatbelt or harness then
@@ -144,9 +184,14 @@ setFrameActive = Small.onFrame(function()
     local now = GetGameTimer()
     if now < nextSample then return end
     local ped = Kora.cache.ped()
-    if GetVehiclePedIsIn(ped, false) ~= vehicle or IsEntityDead(ped) then changed(nil); return end
+    if GetVehiclePedIsIn(ped, false) ~= vehicle or IsEntityDead(ped) then
+        changed(nil)
+        return
+    end
     local speed, body = GetEntitySpeed(vehicle) * 3.6, GetVehicleBodyHealth(vehicle)
-    if body == 1000 and frameBodyChange ~= 0 then frameBodyChange = 0 end
+    if body == 1000 and frameBodyChange ~= 0 then
+        frameBodyChange = 0
+    end
     if frameBodyChange ~= 0 then
         if peakSpeed > 110 and speed < peakSpeed * 0.75 and not damageDone then
             local threshold = not (seatbelt or harness) and 60 or (frameBodyChange > 18 and 150 or 200)
@@ -164,25 +209,42 @@ setFrameActive = Small.onFrame(function()
             nextSample = now + 1000
         end
     end
-    if peakSpeed < 100 then nextSample = math.max(nextSample, now + 100); peakTicks = 0 end
+    if peakSpeed < 100 then
+        nextSample = math.max(nextSample, now + 100)
+        peakTicks = 0
+    end
     frameBodyChange = previousBody - body
     if peakTicks > 0 then
         peakTicks = peakTicks - 1
-        if peakTicks == 1 then peakSpeed = speed end
+        if peakTicks == 1 then
+            peakSpeed = speed
+        end
     else
-        if damageDone then damageDone = false; frameBodyChange = 0; peakSpeed = speed end
-        if speed > peakSpeed then peakSpeed = speed end
-        if speed < peakSpeed then peakTicks = 25 end
+        if damageDone then
+            damageDone = false
+            frameBodyChange = 0
+            peakSpeed = speed
+        end
+        if speed > peakSpeed then
+            peakSpeed = speed
+        end
+        if speed < peakSpeed then
+            peakTicks = 25
+        end
     end
     previousBody, velocity = body, GetEntityVelocity(vehicle)
 end)
-if setFrameActive and not vehicle then setFrameActive(false) end
+if setFrameActive and not vehicle then
+    setFrameActive(false)
+end
 AddEventHandler('QBCore:Client:OnPlayerUnload', reset)
 AddEventHandler('onClientResourceStop', function(resource)
     if resource ~= GetCurrentResourceName() then return end
     if busy then
         Kora.progressbar.cancel()
-        if harnessConfig.lockInventory == true then LocalPlayer.state:set('inv_busy', false, true) end
+        if harnessConfig.lockInventory == true then
+            LocalPlayer.state:set('inv_busy', false, true)
+        end
     end
     reset()
 end)
