@@ -8,6 +8,10 @@ function exports(name, fn) provided[name]=fn end
 function CreateThread(fn) assert(not thread, 'one loop only'); thread=coroutine.create(fn); coroutine.resume(thread) end
 function Wait(ms) waits[#waits+1]=ms; coroutine.yield() end
 Kora = {compat=dofile(dofile(root .. 'test/resource_path.lua')(root, 'kora_lib') .. 'compat/provider.lua')()}
+local logged = {}
+Kora.logging = setmetatable({}, {__index=function(_, level)
+ return function(event, message, fields) logged[#logged+1]={level=level, event=event, message=message, fields=fields}; return true end
+end})
 dofile(root .. 'server/timedjobs.lua')
 local function legacy(name)
  local fn; events['__cfx_export_qb-smallresources_'..name](function(value) fn=value end); return fn
@@ -15,6 +19,7 @@ end
 for _, name in ipairs({'CreateTimedJob','ForceRunTimedJob','StopTimedJob'}) do assert(legacy(name)==provided[name]) end
 assert(thread==nil, 'no thread until a job exists')
 assert(provided.CreateTimedJob('1', 0, print)==nil and provided.CreateTimedJob(1, 0, nil)==nil and thread==nil)
+assert(#logged==2 and logged[1].level=='warn' and logged[1].event=='timedjobs.invalid_arguments', 'invalid arguments are logged as a warning')
 local ran = {}
 local a = provided.CreateTimedJob(os.date('*t').hour, os.date('*t').min, function(d,h,m) ran[#ran+1]={d,h,m} end)
 local b = provided.CreateTimedJob(99, 0, setmetatable({}, {__call=function() ran[#ran+1]='table' end}))
@@ -25,6 +30,8 @@ provided.StopTimedJob(b); provided.ForceRunTimedJob(b); assert(#ran==2)
 provided.ForceRunTimedJob(999)
 local errored = provided.CreateTimedJob(0, 0, function() error('boom') end)
 provided.ForceRunTimedJob(errored)
+assert(#logged==3 and logged[3].level=='error' and logged[3].event=='timedjobs.callback_failed'
+ and logged[3].fields.owner=='jobres' and tostring(logged[3].fields.error):find('boom',1,true), 'a failing job logs an error carrying the error text')
 owner='other'; local c = provided.CreateTimedJob(0,0,function() end); events.onResourceStop('other'); provided.ForceRunTimedJob(c)
 assert(provided.CreateTimedJob(1,1,print)==c+1, 'ids are never reused')
 print('kora_utils timed jobs: all checks passed')

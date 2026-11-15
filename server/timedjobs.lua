@@ -7,7 +7,9 @@ end
 
 local function run(job, time)
     local ok, err = pcall(job.cb, time.day, time.hour, time.min)
-    if not ok then print(('[kora_utils] timed job from %s errored: %s'):format(job.owner, tostring(err))) end
+    if not ok then
+        Kora.logging.error('timedjobs.callback_failed', 'Timed job callback errored', { owner = job.owner, error = tostring(err) })
+    end
 end
 
 local function start()
@@ -28,7 +30,7 @@ end
 
 local function createTimedJob(hour, min, cb)
     if type(hour) ~= 'number' or type(min) ~= 'number' or not Kora.compat.isCallable(cb) then
-        print('WARN: Invalid arguments for export CreateTimedJob(hour, min, cb)')
+        Kora.logging.warn('timedjobs.invalid_arguments', 'Invalid arguments for export CreateTimedJob(hour, min, cb)')
         return nil
     end
     nextId = nextId + 1

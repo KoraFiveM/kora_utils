@@ -106,7 +106,7 @@ function Small.onSpawn(fn)
         for i = 1, #spawnHandlers do
             local ok, err = pcall(spawnHandlers[i])
             if not ok then
-                print(("[kora_utils] onSpawn handler errored: %s"):format(tostring(err)))
+                Kora.logging.error('core.spawn_handler_failed', 'onSpawn handler errored', { error = tostring(err) })
             end
         end
     end
