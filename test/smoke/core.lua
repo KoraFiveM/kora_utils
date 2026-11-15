@@ -105,6 +105,11 @@ harness.test("onSpawn survives a throwing handler (pcall-wrapped)", function()
     Small.onSpawn(function() reached = true end)
     handle.fire("QBCore:Client:OnPlayerLoaded")
     harness.assertTrue(reached, "a later handler must still run after an earlier one errors")
+    local call = _G.__logCalls[#_G.__logCalls]
+    harness.assertTrue(call ~= nil, "the failing handler must be logged")
+    harness.assertEqual(call.level, "error", "handler failure is logged at error")
+    harness.assertEqual(call.event, "core.spawn_handler_failed", "stable event name")
+    harness.assertTrue(tostring(call.fields.error):find("boom", 1, true) ~= nil, "fields carry the error")
 end)
 
 harness.test("onSpawn watches the cached ped via onChange instead of polling", function()

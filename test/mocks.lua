@@ -128,6 +128,17 @@ function M.install()
 
     _G.Kora = _G.Kora or {}
     _G.Kora.cache = _G.Kora.cache or {}
+    -- Spy for Kora.logging: records { level, event, message, fields } in __logCalls.
+    _G.__logCalls = {}
+    _G.Kora.logging = {
+        isEnabled = function() return true end,
+    }
+    for _, level in ipairs({ 'trace', 'debug', 'info', 'warn', 'error', 'fatal' }) do
+        _G.Kora.logging[level] = function(event, message, fields)
+            _G.__logCalls[#_G.__logCalls + 1] = { level = level, event = event, message = message, fields = fields }
+            return true
+        end
+    end
     function _G.Kora.cache.ped() return _G.__ped end
     function _G.Kora.cache.playerId() return 0 end
     function _G.Kora.cache.weapon() return _G.__selectedWeapon end
