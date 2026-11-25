@@ -18,6 +18,7 @@
       "modules/worlddepop/client.lua"
     ],
     "server": [
+      "kora_versioncheck.lua",
       "modules/blacklist/server.lua",
       "modules/seatbelt/server.lua",
       "server/timedjobs.lua"
