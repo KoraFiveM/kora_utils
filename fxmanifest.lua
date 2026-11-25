@@ -1,5 +1,6 @@
 fx_version 'cerulean'
 game 'gta5'
+dependency 'kora_lib'
 provide 'qb-smallresources'
 lua54 'yes'
 use_experimental_fxv2_oal 'yes'
@@ -58,3 +59,5 @@ server_scripts {
 
 -- kora_qa: Gherkin test scenarios (converted legacy tests), see [kora]/kora_qa/README.md
 qa_feature 'tests/*.feature'
+
+server_script 'kora_versioncheck.lua'
